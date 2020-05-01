@@ -1,0 +1,12 @@
+/eqmap/obj
+/eqmap/bin
+/.vs
+/packages
+/eqconsole/obj
+/eqconsole/bin
+/eqprotocol/obj
+/eqprotocol/bin
+/zlib/obj
+/zlib/bin
+/eqconsole/*.user
+/eqmap/*.user
