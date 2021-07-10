@@ -8,6 +8,7 @@ namespace eqmap
 {
     static class Program
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -21,8 +22,9 @@ namespace eqmap
                 Application.Run(new Main());
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Logger.Error(ex);
                 throw;
             }
         }

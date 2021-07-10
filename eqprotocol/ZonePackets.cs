@@ -1531,27 +1531,31 @@ namespace OpenEQ.Netcode {
 		}
 	}
 
-	public struct LdonPoints : IEQStruct {
-		public int Guk;
-		public int Mir;
-		public int Mmc;
-		public int Ruj;
-		public int Tak;
-		public int Available;
+	public struct ZoneChange : IEQStruct {
+		public string Name;
+		public ushort ZoneID;
+		public ushort InstanceId;
+		public float Y;
+		public float X;
+		public float Z;
+		public uint ZoneReason;
+		public int Success;
 
-		public LdonPoints(int Guk, int Mir, int Mmc, int Ruj, int Tak, int Available) : this() {
-			this.Guk = Guk;
-			this.Mir = Mir;
-			this.Mmc = Mmc;
-			this.Ruj = Ruj;
-			this.Tak = Tak;
-			this.Available = Available;
+		public ZoneChange(string Name, ushort ZoneID, ushort InstanceId, float Y, float X, float Z, uint ZoneReason, int Success) : this() {
+			this.Name = Name;
+			this.ZoneID = ZoneID;
+			this.InstanceId = InstanceId;
+			this.Y = Y;
+			this.X = X;
+			this.Z = Z;
+			this.ZoneReason = ZoneReason;
+			this.Success = Success;
 		}
 
-		public LdonPoints(byte[] data, int offset = 0) : this() {
+		public ZoneChange(byte[] data, int offset = 0) : this() {
 			Unpack(data, offset);
 		}
-		public LdonPoints(BinaryReader br) : this() {
+		public ZoneChange(BinaryReader br) : this() {
 			Unpack(br);
 		}
 		public void Unpack(byte[] data, int offset = 0) {
@@ -1562,12 +1566,14 @@ namespace OpenEQ.Netcode {
 			}
 		}
 		public void Unpack(BinaryReader br) {
-			Guk = br.ReadInt32();
-			Mir = br.ReadInt32();
-			Mmc = br.ReadInt32();
-			Ruj = br.ReadInt32();
-			Tak = br.ReadInt32();
-			Available = br.ReadInt32();
+			Name = br.ReadString(64);
+			ZoneID = br.ReadUInt16();
+			InstanceId = br.ReadUInt16();
+			Y = br.ReadSingle();
+			X = br.ReadSingle();
+			Z = br.ReadSingle();
+			ZoneReason = br.ReadUInt32();
+			Success = br.ReadInt32();
 		}
 
 		public byte[] Pack() {
@@ -1579,49 +1585,63 @@ namespace OpenEQ.Netcode {
 			}
 		}
 		public void Pack(BinaryWriter bw) {
-			bw.Write(Guk);
-			bw.Write(Mir);
-			bw.Write(Mmc);
-			bw.Write(Ruj);
-			bw.Write(Tak);
-			bw.Write(Available);
+			bw.Write(Name.ToBytes(64));
+			bw.Write(ZoneID);
+			bw.Write(InstanceId);
+			bw.Write(Y);
+			bw.Write(X);
+			bw.Write(Z);
+			bw.Write(ZoneReason);
+			bw.Write(Success);
 		}
 
 		public override string ToString() {
-			var ret = "struct LdonPoints {\n";
-			ret += "\tGuk = ";
+			var ret = "struct ZoneChange {\n";
+			ret += "\tName = ";
 			try {
-				ret += $"{ Indentify(Guk) },\n";
+				ret += $"{ Indentify(Name) },\n";
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
-			ret += "\tMir = ";
+			ret += "\tZoneID = ";
 			try {
-				ret += $"{ Indentify(Mir) },\n";
+				ret += $"{ Indentify(ZoneID) },\n";
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
-			ret += "\tMmc = ";
+			ret += "\tInstanceId = ";
 			try {
-				ret += $"{ Indentify(Mmc) },\n";
+				ret += $"{ Indentify(InstanceId) },\n";
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
-			ret += "\tRuj = ";
+			ret += "\tY = ";
 			try {
-				ret += $"{ Indentify(Ruj) },\n";
+				ret += $"{ Indentify(Y) },\n";
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
-			ret += "\tTak = ";
+			ret += "\tX = ";
 			try {
-				ret += $"{ Indentify(Tak) },\n";
+				ret += $"{ Indentify(X) },\n";
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
-			ret += "\tAvailable = ";
+			ret += "\tZ = ";
 			try {
-				ret += $"{ Indentify(Available) }\n";
+				ret += $"{ Indentify(Z) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tZoneReason = ";
+			try {
+				ret += $"{ Indentify(ZoneReason) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tSuccess = ";
+			try {
+				ret += $"{ Indentify(Success) }\n";
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
@@ -1697,33 +1717,17 @@ namespace OpenEQ.Netcode {
 		}
 	}
 
-	public struct TintProfile : IEQStruct {
-		public Tint Head;
-		public Tint Chest;
-		public Tint Arms;
-		public Tint Wrist;
-		public Tint Hands;
-		public Tint Legs;
-		public Tint Feet;
-		public Tint Primary;
-		public Tint Secondary;
+	public struct DeleteSpawn : IEQStruct {
+		public uint SpawnId;
 
-		public TintProfile(Tint Head, Tint Chest, Tint Arms, Tint Wrist, Tint Hands, Tint Legs, Tint Feet, Tint Primary, Tint Secondary) : this() {
-			this.Head = Head;
-			this.Chest = Chest;
-			this.Arms = Arms;
-			this.Wrist = Wrist;
-			this.Hands = Hands;
-			this.Legs = Legs;
-			this.Feet = Feet;
-			this.Primary = Primary;
-			this.Secondary = Secondary;
+		public DeleteSpawn(uint SpawnId) : this() {
+			this.SpawnId = SpawnId;
 		}
 
-		public TintProfile(byte[] data, int offset = 0) : this() {
+		public DeleteSpawn(byte[] data, int offset = 0) : this() {
 			Unpack(data, offset);
 		}
-		public TintProfile(BinaryReader br) : this() {
+		public DeleteSpawn(BinaryReader br) : this() {
 			Unpack(br);
 		}
 		public void Unpack(byte[] data, int offset = 0) {
@@ -1734,15 +1738,7 @@ namespace OpenEQ.Netcode {
 			}
 		}
 		public void Unpack(BinaryReader br) {
-			Head = new Tint(br);
-			Chest = new Tint(br);
-			Arms = new Tint(br);
-			Wrist = new Tint(br);
-			Hands = new Tint(br);
-			Legs = new Tint(br);
-			Feet = new Tint(br);
-			Primary = new Tint(br);
-			Secondary = new Tint(br);
+			SpawnId = br.ReadUInt32();
 		}
 
 		public byte[] Pack() {
@@ -1754,70 +1750,14 @@ namespace OpenEQ.Netcode {
 			}
 		}
 		public void Pack(BinaryWriter bw) {
-			Head.Pack(bw);
-			Chest.Pack(bw);
-			Arms.Pack(bw);
-			Wrist.Pack(bw);
-			Hands.Pack(bw);
-			Legs.Pack(bw);
-			Feet.Pack(bw);
-			Primary.Pack(bw);
-			Secondary.Pack(bw);
+			bw.Write(SpawnId);
 		}
 
 		public override string ToString() {
-			var ret = "struct TintProfile {\n";
-			ret += "\tHead = ";
+			var ret = "struct DeleteSpawn {\n";
+			ret += "\tSpawnId = ";
 			try {
-				ret += $"{ Indentify(Head) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tChest = ";
-			try {
-				ret += $"{ Indentify(Chest) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tArms = ";
-			try {
-				ret += $"{ Indentify(Arms) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tWrist = ";
-			try {
-				ret += $"{ Indentify(Wrist) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tHands = ";
-			try {
-				ret += $"{ Indentify(Hands) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tLegs = ";
-			try {
-				ret += $"{ Indentify(Legs) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tFeet = ";
-			try {
-				ret += $"{ Indentify(Feet) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tPrimary = ";
-			try {
-				ret += $"{ Indentify(Primary) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tSecondary = ";
-			try {
-				ret += $"{ Indentify(Secondary) }\n";
+				ret += $"{ Indentify(SpawnId) }\n";
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
@@ -3764,6 +3704,84 @@ namespace OpenEQ.Netcode {
 		}
 	}
 
+	public struct Money : IEQStruct {
+		public uint Platinum;
+		public uint Gold;
+		public uint Silver;
+		public uint Copper;
+
+		public Money(uint Platinum, uint Gold, uint Silver, uint Copper) : this() {
+			this.Platinum = Platinum;
+			this.Gold = Gold;
+			this.Silver = Silver;
+			this.Copper = Copper;
+		}
+
+		public Money(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public Money(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			Platinum = br.ReadUInt32();
+			Gold = br.ReadUInt32();
+			Silver = br.ReadUInt32();
+			Copper = br.ReadUInt32();
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(Platinum);
+			bw.Write(Gold);
+			bw.Write(Silver);
+			bw.Write(Copper);
+		}
+
+		public override string ToString() {
+			var ret = "struct Money {\n";
+			ret += "\tPlatinum = ";
+			try {
+				ret += $"{ Indentify(Platinum) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tGold = ";
+			try {
+				ret += $"{ Indentify(Gold) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tSilver = ";
+			try {
+				ret += $"{ Indentify(Silver) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tCopper = ";
+			try {
+				ret += $"{ Indentify(Copper) }\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
 	public struct Bandolier : IEQStruct {
 		public string Name;
 		public PotionBandolierItem[] Items;
@@ -3878,6 +3896,104 @@ namespace OpenEQ.Netcode {
 		}
 	}
 
+	public struct LdonPoints : IEQStruct {
+		public int Guk;
+		public int Mir;
+		public int Mmc;
+		public int Ruj;
+		public int Tak;
+		public int Available;
+
+		public LdonPoints(int Guk, int Mir, int Mmc, int Ruj, int Tak, int Available) : this() {
+			this.Guk = Guk;
+			this.Mir = Mir;
+			this.Mmc = Mmc;
+			this.Ruj = Ruj;
+			this.Tak = Tak;
+			this.Available = Available;
+		}
+
+		public LdonPoints(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public LdonPoints(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			Guk = br.ReadInt32();
+			Mir = br.ReadInt32();
+			Mmc = br.ReadInt32();
+			Ruj = br.ReadInt32();
+			Tak = br.ReadInt32();
+			Available = br.ReadInt32();
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(Guk);
+			bw.Write(Mir);
+			bw.Write(Mmc);
+			bw.Write(Ruj);
+			bw.Write(Tak);
+			bw.Write(Available);
+		}
+
+		public override string ToString() {
+			var ret = "struct LdonPoints {\n";
+			ret += "\tGuk = ";
+			try {
+				ret += $"{ Indentify(Guk) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tMir = ";
+			try {
+				ret += $"{ Indentify(Mir) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tMmc = ";
+			try {
+				ret += $"{ Indentify(Mmc) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tRuj = ";
+			try {
+				ret += $"{ Indentify(Ruj) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tTak = ";
+			try {
+				ret += $"{ Indentify(Tak) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tAvailable = ";
+			try {
+				ret += $"{ Indentify(Available) }\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
 	public struct LeadershipAA : IEQStruct {
 		public SubLeadershipAA Group;
 		public SubLeadershipAA Raid;
@@ -3929,6 +4045,107 @@ namespace OpenEQ.Netcode {
 			ret += "\tRaid = ";
 			try {
 				ret += $"{ Indentify(Raid) }\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct RequestClientZoneChange : IEQStruct {
+		public ushort ZoneID;
+		public ushort InstanceId;
+		public float Y;
+		public float X;
+		public float Z;
+		public float Heading;
+		int unknown032;
+
+		public RequestClientZoneChange(ushort ZoneID, ushort InstanceId, float Y, float X, float Z, float Heading) : this() {
+			this.ZoneID = ZoneID;
+			this.InstanceId = InstanceId;
+			this.Y = Y;
+			this.X = X;
+			this.Z = Z;
+			this.Heading = Heading;
+		}
+
+		public RequestClientZoneChange(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public RequestClientZoneChange(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			ZoneID = br.ReadUInt16();
+			InstanceId = br.ReadUInt16();
+			Y = br.ReadSingle();
+			X = br.ReadSingle();
+			Z = br.ReadSingle();
+			Heading = br.ReadSingle();
+			unknown032 = br.ReadInt32();
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(ZoneID);
+			bw.Write(InstanceId);
+			bw.Write(Y);
+			bw.Write(X);
+			bw.Write(Z);
+			bw.Write(Heading);
+			bw.Write(unknown032);
+		}
+
+		public override string ToString() {
+			var ret = "struct RequestClientZoneChange {\n";
+			ret += "\tZoneID = ";
+			try {
+				ret += $"{ Indentify(ZoneID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tInstanceId = ";
+			try {
+				ret += $"{ Indentify(InstanceId) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tY = ";
+			try {
+				ret += $"{ Indentify(Y) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tX = ";
+			try {
+				ret += $"{ Indentify(X) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tZ = ";
+			try {
+				ret += $"{ Indentify(Z) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tHeading = ";
+			try {
+				ret += $"{ Indentify(Heading) },\n";
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
@@ -4610,6 +4827,1645 @@ namespace OpenEQ.Netcode {
 			ret += "\tTributeMasterID = ";
 			try {
 				ret += $"{ Indentify(TributeMasterID) }\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct SpellBuff : IEQStruct {
+		public byte EffectType;
+		public byte Level;
+		public float BardModifier;
+		public uint SpellID;
+		public uint Duration;
+		public uint NumHits;
+		public uint CasterID;
+		public int[] SlotData;
+
+		public SpellBuff(byte EffectType, byte Level, float BardModifier, uint SpellID, uint Duration, uint NumHits, uint CasterID, int[] SlotData) : this() {
+			this.EffectType = EffectType;
+			this.Level = Level;
+			this.BardModifier = BardModifier;
+			this.SpellID = SpellID;
+			this.Duration = Duration;
+			this.NumHits = NumHits;
+			this.CasterID = CasterID;
+			this.SlotData = SlotData;
+		}
+
+		public SpellBuff(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public SpellBuff(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			EffectType = br.ReadByte();
+			Level = br.ReadByte();
+			br.ReadBytes(2);
+			BardModifier = br.ReadSingle();
+			SpellID = br.ReadUInt32();
+			Duration = br.ReadUInt32();
+			NumHits = br.ReadUInt32();
+			CasterID = br.ReadUInt32();
+			br.ReadBytes(4);
+			SlotData = new int[12];
+			for(var i = 0; i < 12; ++i) {
+				SlotData[i] = br.ReadInt32();
+			}
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(EffectType);
+			bw.Write(Level);
+			bw.Write(new byte[2]);
+			bw.Write(BardModifier);
+			bw.Write(SpellID);
+			bw.Write(Duration);
+			bw.Write(NumHits);
+			bw.Write(CasterID);
+			bw.Write(new byte[4]);
+			for(var i = 0; i < 12; ++i) {
+				bw.Write(SlotData[i]);
+			}
+		}
+
+		public override string ToString() {
+			var ret = "struct SpellBuff {\n";
+			ret += "\tEffectType = ";
+			try {
+				ret += $"{ Indentify(EffectType) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tLevel = ";
+			try {
+				ret += $"{ Indentify(Level) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tBardModifier = ";
+			try {
+				ret += $"{ Indentify(BardModifier) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tSpellID = ";
+			try {
+				ret += $"{ Indentify(SpellID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDuration = ";
+			try {
+				ret += $"{ Indentify(Duration) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tNumHits = ";
+			try {
+				ret += $"{ Indentify(NumHits) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tCasterID = ";
+			try {
+				ret += $"{ Indentify(CasterID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tSlotData = ";
+			try {
+				ret += "{\n";
+				for(int i = 0, e = SlotData.Length; i < e; ++i)
+					ret += $"\t\t{ Indentify(SlotData[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
+				ret += "\t}\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct ClientPlayerPositionUpdate : IEQStruct {
+		public ushort ID;
+		public ushort Sequence;
+		uint unknown0004;
+		public float X;
+		public float Y;
+		public ClientUpdatePositionSub1 Sub1;
+		public float DeltaX;
+		public float DeltaY;
+		public float Z;
+		public float DeltaZ;
+		public ClientUpdatePositionSub2 Sub2;
+
+		public ClientPlayerPositionUpdate(ushort ID, ushort Sequence, float X, float Y, ClientUpdatePositionSub1 Sub1, float DeltaX, float DeltaY, float Z, float DeltaZ, ClientUpdatePositionSub2 Sub2) : this() {
+			this.ID = ID;
+			this.Sequence = Sequence;
+			this.X = X;
+			this.Y = Y;
+			this.Sub1 = Sub1;
+			this.DeltaX = DeltaX;
+			this.DeltaY = DeltaY;
+			this.Z = Z;
+			this.DeltaZ = DeltaZ;
+			this.Sub2 = Sub2;
+		}
+
+		public ClientPlayerPositionUpdate(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public ClientPlayerPositionUpdate(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			ID = br.ReadUInt16();
+			Sequence = br.ReadUInt16();
+			unknown0004 = br.ReadUInt32();
+			X = br.ReadSingle();
+			Y = br.ReadSingle();
+			Sub1 = new ClientUpdatePositionSub1(br);
+			DeltaX = br.ReadSingle();
+			DeltaY = br.ReadSingle();
+			Z = br.ReadSingle();
+			DeltaZ = br.ReadSingle();
+			Sub2 = new ClientUpdatePositionSub2(br);
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(ID);
+			bw.Write(Sequence);
+			bw.Write(unknown0004);
+			bw.Write(X);
+			bw.Write(Y);
+			Sub1.Pack(bw);
+			bw.Write(DeltaX);
+			bw.Write(DeltaY);
+			bw.Write(Z);
+			bw.Write(DeltaZ);
+			Sub2.Pack(bw);
+		}
+
+		public override string ToString() {
+			var ret = "struct ClientPlayerPositionUpdate {\n";
+			ret += "\tID = ";
+			try {
+				ret += $"{ Indentify(ID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tSequence = ";
+			try {
+				ret += $"{ Indentify(Sequence) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tX = ";
+			try {
+				ret += $"{ Indentify(X) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tY = ";
+			try {
+				ret += $"{ Indentify(Y) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tSub1 = ";
+			try {
+				ret += $"{ Indentify(Sub1) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDeltaX = ";
+			try {
+				ret += $"{ Indentify(DeltaX) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDeltaY = ";
+			try {
+				ret += $"{ Indentify(DeltaY) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tZ = ";
+			try {
+				ret += $"{ Indentify(Z) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDeltaZ = ";
+			try {
+				ret += $"{ Indentify(DeltaZ) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tSub2 = ";
+			try {
+				ret += $"{ Indentify(Sub2) }\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct TaskActivity : IEQStruct {
+		public uint SequenceNumber;
+		public uint TaskID;
+		public uint ActivityID;
+		public uint ActivityType;
+		public uint Optional;
+		public string Text1;
+		public string Text2;
+		public uint GoalCount;
+		public uint ZoneID;
+		public string Text3;
+		public uint DoneCount;
+
+		public TaskActivity(uint SequenceNumber, uint TaskID, uint ActivityID, uint ActivityType, uint Optional, string Text1, string Text2, uint GoalCount, uint ZoneID, string Text3, uint DoneCount) : this() {
+			this.SequenceNumber = SequenceNumber;
+			this.TaskID = TaskID;
+			this.ActivityID = ActivityID;
+			this.ActivityType = ActivityType;
+			this.Optional = Optional;
+			this.Text1 = Text1;
+			this.Text2 = Text2;
+			this.GoalCount = GoalCount;
+			this.ZoneID = ZoneID;
+			this.Text3 = Text3;
+			this.DoneCount = DoneCount;
+		}
+
+		public TaskActivity(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public TaskActivity(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			SequenceNumber = br.ReadUInt32();
+			br.ReadBytes(4);
+			TaskID = br.ReadUInt32();
+			ActivityID = br.ReadUInt32();
+			br.ReadBytes(4);
+			ActivityType = br.ReadUInt32();
+			Optional = br.ReadUInt32();
+			br.ReadBytes(4);
+			Text1 = br.ReadString(-1);
+			Text2 = br.ReadString(-1);
+			GoalCount = br.ReadUInt32();
+			br.ReadBytes(8);
+			ZoneID = br.ReadUInt32();
+			br.ReadBytes(4);
+			Text3 = br.ReadString(-1);
+			DoneCount = br.ReadUInt32();
+			br.ReadBytes(4);
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(SequenceNumber);
+			bw.Write(new byte[4]);
+			bw.Write(TaskID);
+			bw.Write(ActivityID);
+			bw.Write(new byte[4]);
+			bw.Write(ActivityType);
+			bw.Write(Optional);
+			bw.Write(new byte[4]);
+			bw.Write(Text1.ToBytes());
+			bw.Write(Text2.ToBytes());
+			bw.Write(GoalCount);
+			bw.Write(new byte[8]);
+			bw.Write(ZoneID);
+			bw.Write(new byte[4]);
+			bw.Write(Text3.ToBytes());
+			bw.Write(DoneCount);
+			bw.Write(new byte[4]);
+		}
+
+		public override string ToString() {
+			var ret = "struct TaskActivity {\n";
+			ret += "\tSequenceNumber = ";
+			try {
+				ret += $"{ Indentify(SequenceNumber) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tTaskID = ";
+			try {
+				ret += $"{ Indentify(TaskID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tActivityID = ";
+			try {
+				ret += $"{ Indentify(ActivityID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tActivityType = ";
+			try {
+				ret += $"{ Indentify(ActivityType) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tOptional = ";
+			try {
+				ret += $"{ Indentify(Optional) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tText1 = ";
+			try {
+				ret += $"{ Indentify(Text1) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tText2 = ";
+			try {
+				ret += $"{ Indentify(Text2) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tGoalCount = ";
+			try {
+				ret += $"{ Indentify(GoalCount) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tZoneID = ";
+			try {
+				ret += $"{ Indentify(ZoneID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tText3 = ";
+			try {
+				ret += $"{ Indentify(Text3) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDoneCount = ";
+			try {
+				ret += $"{ Indentify(DoneCount) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct Spawn : IEQStruct {
+		public string Name;
+		public uint SpawnID;
+		public byte Level;
+		public CharType CharType;
+		public SpawnBitfields SpawnFlags;
+		public byte OtherFlags;
+		public float Size;
+		public byte Face;
+		public float WalkSpeed;
+		public float RunSpeed;
+		public Race Race;
+		public byte ShowName;
+		public uint BodyType;
+		public byte CurHP;
+		public byte HairColor;
+		public byte BeardColor;
+		public byte EyeColor1;
+		public byte EyeColor2;
+		public byte HairStyle;
+		public byte Beard;
+		public uint DrakkinHeritage;
+		public uint DrakkinTattoo;
+		public uint DrakkinDetails;
+		public byte Statue;
+		public uint Deity;
+		public uint GuildID;
+		public GuildRank GuildRank;
+		public byte Class;
+		public bool PVP;
+		public byte StandState;
+		public byte Light;
+		public byte FlyMode;
+		public byte EquipChest2;
+		public byte Helm;
+		public string LastName;
+		public AATitle AATitle;
+		public uint PetOwnerID;
+		public uint PlayerState;
+		public SpawnPosition Position;
+		public TintProfile EquipmentTint;
+		public TextureProfile Equipment;
+		public string Title;
+		public string Suffix;
+		public bool IsMercenary;
+
+		public Spawn(string Name, uint SpawnID, byte Level, CharType CharType, SpawnBitfields SpawnFlags, byte OtherFlags, float Size, byte Face, float WalkSpeed, float RunSpeed, Race Race, byte ShowName, uint BodyType, byte CurHP, byte HairColor, byte BeardColor, byte EyeColor1, byte EyeColor2, byte HairStyle, byte Beard, uint DrakkinHeritage, uint DrakkinTattoo, uint DrakkinDetails, byte Statue, uint Deity, uint GuildID, GuildRank GuildRank, byte Class, bool PVP, byte StandState, byte Light, byte FlyMode, byte EquipChest2, byte Helm, string LastName, AATitle AATitle, uint PetOwnerID, uint PlayerState, SpawnPosition Position, TintProfile EquipmentTint, TextureProfile Equipment, string Title, string Suffix, bool IsMercenary) : this() {
+			this.Name = Name;
+			this.SpawnID = SpawnID;
+			this.Level = Level;
+			this.CharType = CharType;
+			this.SpawnFlags = SpawnFlags;
+			this.OtherFlags = OtherFlags;
+			this.Size = Size;
+			this.Face = Face;
+			this.WalkSpeed = WalkSpeed;
+			this.RunSpeed = RunSpeed;
+			this.Race = Race;
+			this.ShowName = ShowName;
+			this.BodyType = BodyType;
+			this.CurHP = CurHP;
+			this.HairColor = HairColor;
+			this.BeardColor = BeardColor;
+			this.EyeColor1 = EyeColor1;
+			this.EyeColor2 = EyeColor2;
+			this.HairStyle = HairStyle;
+			this.Beard = Beard;
+			this.DrakkinHeritage = DrakkinHeritage;
+			this.DrakkinTattoo = DrakkinTattoo;
+			this.DrakkinDetails = DrakkinDetails;
+			this.Statue = Statue;
+			this.Deity = Deity;
+			this.GuildID = GuildID;
+			this.GuildRank = GuildRank;
+			this.Class = Class;
+			this.PVP = PVP;
+			this.StandState = StandState;
+			this.Light = Light;
+			this.FlyMode = FlyMode;
+			this.EquipChest2 = EquipChest2;
+			this.Helm = Helm;
+			this.LastName = LastName;
+			this.AATitle = AATitle;
+			this.PetOwnerID = PetOwnerID;
+			this.PlayerState = PlayerState;
+			this.Position = Position;
+			this.EquipmentTint = EquipmentTint;
+			this.Equipment = Equipment;
+			this.Title = Title;
+			this.Suffix = Suffix;
+			this.IsMercenary = IsMercenary;
+		}
+
+		public Spawn(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public Spawn(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			Name = br.ReadString(-1);
+			SpawnID = br.ReadUInt32();
+			Level = br.ReadByte();
+			br.ReadBytes(4);
+			CharType = ((CharType) 0).Unpack(br);
+			SpawnFlags = new SpawnBitfields(br);
+			OtherFlags = br.ReadByte();
+			br.ReadBytes(8);
+			Size = br.ReadSingle();
+			Face = br.ReadByte();
+			WalkSpeed = br.ReadSingle();
+			RunSpeed = br.ReadSingle();
+			Race = ((Race) 0).Unpack(br);
+			ShowName = br.ReadByte();
+			BodyType = br.ReadUInt32();
+			CurHP = br.ReadByte();
+			HairColor = br.ReadByte();
+			BeardColor = br.ReadByte();
+			EyeColor1 = br.ReadByte();
+			EyeColor2 = br.ReadByte();
+			HairStyle = br.ReadByte();
+			Beard = br.ReadByte();
+			DrakkinHeritage = br.ReadUInt32();
+			DrakkinTattoo = br.ReadUInt32();
+			DrakkinDetails = br.ReadUInt32();
+			Statue = br.ReadByte();
+			Deity = br.ReadUInt32();
+			GuildID = br.ReadUInt32();
+			GuildRank = ((GuildRank) 0).Unpack(br);
+			br.ReadBytes(3);
+			Class = br.ReadByte();
+			PVP = br.ReadByte() != 0;
+			StandState = br.ReadByte();
+			Light = br.ReadByte();
+			FlyMode = br.ReadByte();
+			EquipChest2 = br.ReadByte();
+			br.ReadBytes(2);
+			Helm = br.ReadByte();
+			LastName = br.ReadString(-1);
+			AATitle = ((AATitle) 0).Unpack(br);
+			br.ReadBytes(1);
+			PetOwnerID = br.ReadUInt32();
+			br.ReadBytes(1);
+			PlayerState = br.ReadUInt32();
+			br.ReadBytes(5*4);
+			Position = new SpawnPosition(br);
+			EquipmentTint = new TintProfile(br);
+			if(CharType == CharType.PC || (int) Race == 12 || (int) Race == 128 || (int) Race == 130 || (int) Race == 330 || (int) Race == 522) {
+				Equipment = new TextureProfile(br);
+			}
+			if((OtherFlags & 4) != 0) {
+				Title = br.ReadString(-1);
+			}
+			if((OtherFlags & 8) != 0) {
+				Suffix = br.ReadString(-1);
+			}
+			br.ReadBytes(8);
+			IsMercenary = br.ReadByte() != 0;
+			br.ReadBytes(28);
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(Name.ToBytes());
+			bw.Write(SpawnID);
+			bw.Write(Level);
+			bw.Write(new byte[4]);
+			bw.Write((byte) CharType);
+			SpawnFlags.Pack(bw);
+			bw.Write(OtherFlags);
+			bw.Write(new byte[8]);
+			bw.Write(Size);
+			bw.Write(Face);
+			bw.Write(WalkSpeed);
+			bw.Write(RunSpeed);
+			bw.Write((uint) Race);
+			bw.Write(ShowName);
+			bw.Write(BodyType);
+			bw.Write(CurHP);
+			bw.Write(HairColor);
+			bw.Write(BeardColor);
+			bw.Write(EyeColor1);
+			bw.Write(EyeColor2);
+			bw.Write(HairStyle);
+			bw.Write(Beard);
+			bw.Write(DrakkinHeritage);
+			bw.Write(DrakkinTattoo);
+			bw.Write(DrakkinDetails);
+			bw.Write(Statue);
+			bw.Write(Deity);
+			bw.Write(GuildID);
+			bw.Write((sbyte) GuildRank);
+			bw.Write(new byte[3]);
+			bw.Write(Class);
+			bw.Write((byte) (PVP ? 1 : 0));
+			bw.Write(StandState);
+			bw.Write(Light);
+			bw.Write(FlyMode);
+			bw.Write(EquipChest2);
+			bw.Write(new byte[2]);
+			bw.Write(Helm);
+			bw.Write(LastName.ToBytes());
+			bw.Write((uint) AATitle);
+			bw.Write(new byte[1]);
+			bw.Write(PetOwnerID);
+			bw.Write(new byte[1]);
+			bw.Write(PlayerState);
+			bw.Write(new byte[5*4]);
+			Position.Pack(bw);
+			EquipmentTint.Pack(bw);
+			if(CharType == CharType.PC || (int) Race == 12 || (int) Race == 128 || (int) Race == 130 || (int) Race == 330 || (int) Race == 522) {
+				Equipment.Pack(bw);
+			}
+			if((OtherFlags & 4) != 0) {
+				bw.Write(Title.ToBytes());
+			}
+			if((OtherFlags & 8) != 0) {
+				bw.Write(Suffix.ToBytes());
+			}
+			bw.Write(new byte[8]);
+			bw.Write((byte) (IsMercenary ? 1 : 0));
+			bw.Write(new byte[28]);
+		}
+
+		public override string ToString() {
+			var ret = "struct Spawn {\n";
+			ret += "\tName = ";
+			try {
+				ret += $"{ Indentify(Name) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tSpawnID = ";
+			try {
+				ret += $"{ Indentify(SpawnID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tLevel = ";
+			try {
+				ret += $"{ Indentify(Level) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tCharType = ";
+			try {
+				ret += $"{ Indentify(CharType) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tSpawnFlags = ";
+			try {
+				ret += $"{ Indentify(SpawnFlags) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tOtherFlags = ";
+			try {
+				ret += $"{ Indentify(OtherFlags) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tSize = ";
+			try {
+				ret += $"{ Indentify(Size) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tFace = ";
+			try {
+				ret += $"{ Indentify(Face) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tWalkSpeed = ";
+			try {
+				ret += $"{ Indentify(WalkSpeed) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tRunSpeed = ";
+			try {
+				ret += $"{ Indentify(RunSpeed) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tRace = ";
+			try {
+				ret += $"{ Indentify(Race) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tShowName = ";
+			try {
+				ret += $"{ Indentify(ShowName) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tBodyType = ";
+			try {
+				ret += $"{ Indentify(BodyType) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tCurHP = ";
+			try {
+				ret += $"{ Indentify(CurHP) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tHairColor = ";
+			try {
+				ret += $"{ Indentify(HairColor) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tBeardColor = ";
+			try {
+				ret += $"{ Indentify(BeardColor) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tEyeColor1 = ";
+			try {
+				ret += $"{ Indentify(EyeColor1) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tEyeColor2 = ";
+			try {
+				ret += $"{ Indentify(EyeColor2) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tHairStyle = ";
+			try {
+				ret += $"{ Indentify(HairStyle) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tBeard = ";
+			try {
+				ret += $"{ Indentify(Beard) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDrakkinHeritage = ";
+			try {
+				ret += $"{ Indentify(DrakkinHeritage) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDrakkinTattoo = ";
+			try {
+				ret += $"{ Indentify(DrakkinTattoo) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDrakkinDetails = ";
+			try {
+				ret += $"{ Indentify(DrakkinDetails) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tStatue = ";
+			try {
+				ret += $"{ Indentify(Statue) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDeity = ";
+			try {
+				ret += $"{ Indentify(Deity) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tGuildID = ";
+			try {
+				ret += $"{ Indentify(GuildID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tGuildRank = ";
+			try {
+				ret += $"{ Indentify(GuildRank) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tClass = ";
+			try {
+				ret += $"{ Indentify(Class) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tPVP = ";
+			try {
+				ret += $"{ Indentify(PVP) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tStandState = ";
+			try {
+				ret += $"{ Indentify(StandState) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tLight = ";
+			try {
+				ret += $"{ Indentify(Light) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tFlyMode = ";
+			try {
+				ret += $"{ Indentify(FlyMode) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tEquipChest2 = ";
+			try {
+				ret += $"{ Indentify(EquipChest2) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tHelm = ";
+			try {
+				ret += $"{ Indentify(Helm) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tLastName = ";
+			try {
+				ret += $"{ Indentify(LastName) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tAATitle = ";
+			try {
+				ret += $"{ Indentify(AATitle) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tPetOwnerID = ";
+			try {
+				ret += $"{ Indentify(PetOwnerID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tPlayerState = ";
+			try {
+				ret += $"{ Indentify(PlayerState) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tPosition = ";
+			try {
+				ret += $"{ Indentify(Position) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tEquipmentTint = ";
+			try {
+				ret += $"{ Indentify(EquipmentTint) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			if(CharType == CharType.PC || (int) Race == 12 || (int) Race == 128 || (int) Race == 130 || (int) Race == 330 || (int) Race == 522) {
+				ret += "\tEquipment = ";
+				try {
+					ret += $"{ Indentify(Equipment) },\n";
+				} catch(NullReferenceException) {
+					ret += "!!NULL!!\n";
+				}
+			}
+			if((OtherFlags & 4) != 0) {
+				ret += "\tTitle = ";
+				try {
+					ret += $"{ Indentify(Title) },\n";
+				} catch(NullReferenceException) {
+					ret += "!!NULL!!\n";
+				}
+			}
+			if((OtherFlags & 8) != 0) {
+				ret += "\tSuffix = ";
+				try {
+					ret += $"{ Indentify(Suffix) },\n";
+				} catch(NullReferenceException) {
+					ret += "!!NULL!!\n";
+				}
+			}
+			ret += "\tIsMercenary = ";
+			try {
+				ret += $"{ Indentify(IsMercenary) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct ClientZoneEntry : IEQStruct {
+		uint unk;
+		public string CharName;
+
+		public ClientZoneEntry(string CharName) : this() {
+			this.CharName = CharName;
+		}
+
+		public ClientZoneEntry(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public ClientZoneEntry(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			unk = br.ReadUInt32();
+			CharName = br.ReadString(64);
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(unk);
+			bw.Write(CharName.ToBytes(64));
+		}
+
+		public override string ToString() {
+			var ret = "struct ClientZoneEntry {\n";
+			ret += "\tCharName = ";
+			try {
+				ret += $"{ Indentify(CharName) }\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct AugSlot : IEQStruct {
+		public uint Type;
+		public bool Visible;
+
+		public AugSlot(uint Type, bool Visible) : this() {
+			this.Type = Type;
+			this.Visible = Visible;
+		}
+
+		public AugSlot(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public AugSlot(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			Type = br.ReadUInt32();
+			Visible = br.ReadByte() != 0;
+			br.ReadBytes(1);
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(Type);
+			bw.Write((byte) (Visible ? 1 : 0));
+			bw.Write(new byte[1]);
+		}
+
+		public override string ToString() {
+			var ret = "struct AugSlot {\n";
+			ret += "\tType = ";
+			try {
+				ret += $"{ Indentify(Type) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tVisible = ";
+			try {
+				ret += $"{ Indentify(Visible) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct FindableNPC : IEQStruct {
+		public bool Remove;
+		public uint EntityID;
+		public string Name;
+		public string LastName;
+		public uint Race;
+		public byte Class;
+
+		public FindableNPC(bool Remove, uint EntityID, string Name, string LastName, uint Race, byte Class) : this() {
+			this.Remove = Remove;
+			this.EntityID = EntityID;
+			this.Name = Name;
+			this.LastName = LastName;
+			this.Race = Race;
+			this.Class = Class;
+		}
+
+		public FindableNPC(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public FindableNPC(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			Remove = br.ReadUInt32() != 0;
+			EntityID = br.ReadUInt32();
+			Name = br.ReadString(64);
+			LastName = br.ReadString(32);
+			Race = br.ReadUInt32();
+			Class = br.ReadByte();
+			br.ReadBytes(3);
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write((uint) (Remove ? 1 : 0));
+			bw.Write(EntityID);
+			bw.Write(Name.ToBytes(64));
+			bw.Write(LastName.ToBytes(32));
+			bw.Write(Race);
+			bw.Write(Class);
+			bw.Write(new byte[3]);
+		}
+
+		public override string ToString() {
+			var ret = "struct FindableNPC {\n";
+			ret += "\tRemove = ";
+			try {
+				ret += $"{ Indentify(Remove) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tEntityID = ";
+			try {
+				ret += $"{ Indentify(EntityID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tName = ";
+			try {
+				ret += $"{ Indentify(Name) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tLastName = ";
+			try {
+				ret += $"{ Indentify(LastName) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tRace = ";
+			try {
+				ret += $"{ Indentify(Race) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tClass = ";
+			try {
+				ret += $"{ Indentify(Class) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct SubLeadershipAA : IEQStruct {
+		public uint MarkNPC;
+		public uint NPCHealth;
+		public uint DelegateMainAssist;
+		public uint DelegateMarkNPC;
+		uint _4;
+		uint _5;
+		uint _6;
+		public uint SpellAwareness;
+		public uint OffenseEnhancement;
+		public uint ManaEnhancement;
+		public uint HealthEnhancement;
+		public uint HealthRegeneration;
+		public uint FindPathToPC;
+		public uint HealthOfTargetsTarget;
+		uint _14;
+		uint _15;
+
+		public SubLeadershipAA(uint MarkNPC, uint NPCHealth, uint DelegateMainAssist, uint DelegateMarkNPC, uint SpellAwareness, uint OffenseEnhancement, uint ManaEnhancement, uint HealthEnhancement, uint HealthRegeneration, uint FindPathToPC, uint HealthOfTargetsTarget) : this() {
+			this.MarkNPC = MarkNPC;
+			this.NPCHealth = NPCHealth;
+			this.DelegateMainAssist = DelegateMainAssist;
+			this.DelegateMarkNPC = DelegateMarkNPC;
+			this.SpellAwareness = SpellAwareness;
+			this.OffenseEnhancement = OffenseEnhancement;
+			this.ManaEnhancement = ManaEnhancement;
+			this.HealthEnhancement = HealthEnhancement;
+			this.HealthRegeneration = HealthRegeneration;
+			this.FindPathToPC = FindPathToPC;
+			this.HealthOfTargetsTarget = HealthOfTargetsTarget;
+		}
+
+		public SubLeadershipAA(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public SubLeadershipAA(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			MarkNPC = br.ReadUInt32();
+			NPCHealth = br.ReadUInt32();
+			DelegateMainAssist = br.ReadUInt32();
+			DelegateMarkNPC = br.ReadUInt32();
+			_4 = br.ReadUInt32();
+			_5 = br.ReadUInt32();
+			_6 = br.ReadUInt32();
+			SpellAwareness = br.ReadUInt32();
+			OffenseEnhancement = br.ReadUInt32();
+			ManaEnhancement = br.ReadUInt32();
+			HealthEnhancement = br.ReadUInt32();
+			HealthRegeneration = br.ReadUInt32();
+			FindPathToPC = br.ReadUInt32();
+			HealthOfTargetsTarget = br.ReadUInt32();
+			_14 = br.ReadUInt32();
+			_15 = br.ReadUInt32();
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(MarkNPC);
+			bw.Write(NPCHealth);
+			bw.Write(DelegateMainAssist);
+			bw.Write(DelegateMarkNPC);
+			bw.Write(_4);
+			bw.Write(_5);
+			bw.Write(_6);
+			bw.Write(SpellAwareness);
+			bw.Write(OffenseEnhancement);
+			bw.Write(ManaEnhancement);
+			bw.Write(HealthEnhancement);
+			bw.Write(HealthRegeneration);
+			bw.Write(FindPathToPC);
+			bw.Write(HealthOfTargetsTarget);
+			bw.Write(_14);
+			bw.Write(_15);
+		}
+
+		public override string ToString() {
+			var ret = "struct SubLeadershipAA {\n";
+			ret += "\tMarkNPC = ";
+			try {
+				ret += $"{ Indentify(MarkNPC) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tNPCHealth = ";
+			try {
+				ret += $"{ Indentify(NPCHealth) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDelegateMainAssist = ";
+			try {
+				ret += $"{ Indentify(DelegateMainAssist) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDelegateMarkNPC = ";
+			try {
+				ret += $"{ Indentify(DelegateMarkNPC) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tSpellAwareness = ";
+			try {
+				ret += $"{ Indentify(SpellAwareness) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tOffenseEnhancement = ";
+			try {
+				ret += $"{ Indentify(OffenseEnhancement) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tManaEnhancement = ";
+			try {
+				ret += $"{ Indentify(ManaEnhancement) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tHealthEnhancement = ";
+			try {
+				ret += $"{ Indentify(HealthEnhancement) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tHealthRegeneration = ";
+			try {
+				ret += $"{ Indentify(HealthRegeneration) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tFindPathToPC = ";
+			try {
+				ret += $"{ Indentify(FindPathToPC) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tHealthOfTargetsTarget = ";
+			try {
+				ret += $"{ Indentify(HealthOfTargetsTarget) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct TaskDescription : IEQStruct {
+		public uint SequenceNumber;
+		public uint TaskID;
+		public string Title;
+		public uint Duration;
+		public uint StartTime;
+		public string Description;
+		public uint RewardCount;
+		public string RewardText;
+		public uint Points;
+
+		public TaskDescription(uint SequenceNumber, uint TaskID, string Title, uint Duration, uint StartTime, string Description, uint RewardCount, string RewardText, uint Points) : this() {
+			this.SequenceNumber = SequenceNumber;
+			this.TaskID = TaskID;
+			this.Title = Title;
+			this.Duration = Duration;
+			this.StartTime = StartTime;
+			this.Description = Description;
+			this.RewardCount = RewardCount;
+			this.RewardText = RewardText;
+			this.Points = Points;
+		}
+
+		public TaskDescription(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public TaskDescription(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			SequenceNumber = br.ReadUInt32();
+			TaskID = br.ReadUInt32();
+			br.ReadBytes(4*2+1);
+			Title = br.ReadString(-1);
+			Duration = br.ReadUInt32();
+			br.ReadBytes(4);
+			StartTime = br.ReadUInt32();
+			Description = br.ReadString(-1);
+			RewardCount = br.ReadUInt32();
+			br.ReadBytes(4*2+2);
+			RewardText = br.ReadString(-1);
+			Points = br.ReadUInt32();
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(SequenceNumber);
+			bw.Write(TaskID);
+			bw.Write(new byte[4*2+1]);
+			bw.Write(Title.ToBytes());
+			bw.Write(Duration);
+			bw.Write(new byte[4]);
+			bw.Write(StartTime);
+			bw.Write(Description.ToBytes());
+			bw.Write(RewardCount);
+			bw.Write(new byte[4*2+2]);
+			bw.Write(RewardText.ToBytes());
+			bw.Write(Points);
+		}
+
+		public override string ToString() {
+			var ret = "struct TaskDescription {\n";
+			ret += "\tSequenceNumber = ";
+			try {
+				ret += $"{ Indentify(SequenceNumber) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tTaskID = ";
+			try {
+				ret += $"{ Indentify(TaskID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tTitle = ";
+			try {
+				ret += $"{ Indentify(Title) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDuration = ";
+			try {
+				ret += $"{ Indentify(Duration) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tStartTime = ";
+			try {
+				ret += $"{ Indentify(StartTime) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tDescription = ";
+			try {
+				ret += $"{ Indentify(Description) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tRewardCount = ";
+			try {
+				ret += $"{ Indentify(RewardCount) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tRewardText = ";
+			try {
+				ret += $"{ Indentify(RewardText) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tPoints = ";
+			try {
+				ret += $"{ Indentify(Points) }\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct TintProfile : IEQStruct {
+		public Tint Head;
+		public Tint Chest;
+		public Tint Arms;
+		public Tint Wrist;
+		public Tint Hands;
+		public Tint Legs;
+		public Tint Feet;
+		public Tint Primary;
+		public Tint Secondary;
+
+		public TintProfile(Tint Head, Tint Chest, Tint Arms, Tint Wrist, Tint Hands, Tint Legs, Tint Feet, Tint Primary, Tint Secondary) : this() {
+			this.Head = Head;
+			this.Chest = Chest;
+			this.Arms = Arms;
+			this.Wrist = Wrist;
+			this.Hands = Hands;
+			this.Legs = Legs;
+			this.Feet = Feet;
+			this.Primary = Primary;
+			this.Secondary = Secondary;
+		}
+
+		public TintProfile(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public TintProfile(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			Head = new Tint(br);
+			Chest = new Tint(br);
+			Arms = new Tint(br);
+			Wrist = new Tint(br);
+			Hands = new Tint(br);
+			Legs = new Tint(br);
+			Feet = new Tint(br);
+			Primary = new Tint(br);
+			Secondary = new Tint(br);
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			Head.Pack(bw);
+			Chest.Pack(bw);
+			Arms.Pack(bw);
+			Wrist.Pack(bw);
+			Hands.Pack(bw);
+			Legs.Pack(bw);
+			Feet.Pack(bw);
+			Primary.Pack(bw);
+			Secondary.Pack(bw);
+		}
+
+		public override string ToString() {
+			var ret = "struct TintProfile {\n";
+			ret += "\tHead = ";
+			try {
+				ret += $"{ Indentify(Head) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tChest = ";
+			try {
+				ret += $"{ Indentify(Chest) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tArms = ";
+			try {
+				ret += $"{ Indentify(Arms) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tWrist = ";
+			try {
+				ret += $"{ Indentify(Wrist) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tHands = ";
+			try {
+				ret += $"{ Indentify(Hands) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tLegs = ";
+			try {
+				ret += $"{ Indentify(Legs) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tFeet = ";
+			try {
+				ret += $"{ Indentify(Feet) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tPrimary = ";
+			try {
+				ret += $"{ Indentify(Primary) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tSecondary = ";
+			try {
+				ret += $"{ Indentify(Secondary) }\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct Weather : IEQStruct {
+		public uint Val1;
+		public WeatherType Type;
+
+		public Weather(uint Val1, WeatherType Type) : this() {
+			this.Val1 = Val1;
+			this.Type = Type;
+		}
+
+		public Weather(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public Weather(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			Val1 = br.ReadUInt32();
+			Type = ((WeatherType) 0).Unpack(br);
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(Val1);
+			bw.Write((uint) Type);
+		}
+
+		public override string ToString() {
+			var ret = "struct Weather {\n";
+			ret += "\tVal1 = ";
+			try {
+				ret += $"{ Indentify(Val1) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tType = ";
+			try {
+				ret += $"{ Indentify(Type) }\n";
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
@@ -5685,1602 +7541,14 @@ namespace OpenEQ.Netcode {
 		}
 	}
 
-	public struct SpellBuff : IEQStruct {
-		public byte EffectType;
-		public byte Level;
-		public float BardModifier;
-		public uint SpellID;
-		public uint Duration;
-		public uint NumHits;
-		public uint CasterID;
-		public int[] SlotData;
-
-		public SpellBuff(byte EffectType, byte Level, float BardModifier, uint SpellID, uint Duration, uint NumHits, uint CasterID, int[] SlotData) : this() {
-			this.EffectType = EffectType;
-			this.Level = Level;
-			this.BardModifier = BardModifier;
-			this.SpellID = SpellID;
-			this.Duration = Duration;
-			this.NumHits = NumHits;
-			this.CasterID = CasterID;
-			this.SlotData = SlotData;
-		}
-
-		public SpellBuff(byte[] data, int offset = 0) : this() {
-			Unpack(data, offset);
-		}
-		public SpellBuff(BinaryReader br) : this() {
-			Unpack(br);
-		}
-		public void Unpack(byte[] data, int offset = 0) {
-			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
-				using(var br = new BinaryReader(ms)) {
-					Unpack(br);
-				}
-			}
-		}
-		public void Unpack(BinaryReader br) {
-			EffectType = br.ReadByte();
-			Level = br.ReadByte();
-			br.ReadBytes(2);
-			BardModifier = br.ReadSingle();
-			SpellID = br.ReadUInt32();
-			Duration = br.ReadUInt32();
-			NumHits = br.ReadUInt32();
-			CasterID = br.ReadUInt32();
-			br.ReadBytes(4);
-			SlotData = new int[12];
-			for(var i = 0; i < 12; ++i) {
-				SlotData[i] = br.ReadInt32();
-			}
-		}
-
-		public byte[] Pack() {
-			using(var ms = new MemoryStream()) {
-				using(var bw = new BinaryWriter(ms)) {
-					Pack(bw);
-					return ms.ToArray();
-				}
-			}
-		}
-		public void Pack(BinaryWriter bw) {
-			bw.Write(EffectType);
-			bw.Write(Level);
-			bw.Write(new byte[2]);
-			bw.Write(BardModifier);
-			bw.Write(SpellID);
-			bw.Write(Duration);
-			bw.Write(NumHits);
-			bw.Write(CasterID);
-			bw.Write(new byte[4]);
-			for(var i = 0; i < 12; ++i) {
-				bw.Write(SlotData[i]);
-			}
-		}
-
-		public override string ToString() {
-			var ret = "struct SpellBuff {\n";
-			ret += "\tEffectType = ";
-			try {
-				ret += $"{ Indentify(EffectType) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tLevel = ";
-			try {
-				ret += $"{ Indentify(Level) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tBardModifier = ";
-			try {
-				ret += $"{ Indentify(BardModifier) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tSpellID = ";
-			try {
-				ret += $"{ Indentify(SpellID) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDuration = ";
-			try {
-				ret += $"{ Indentify(Duration) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tNumHits = ";
-			try {
-				ret += $"{ Indentify(NumHits) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tCasterID = ";
-			try {
-				ret += $"{ Indentify(CasterID) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tSlotData = ";
-			try {
-				ret += "{\n";
-				for(int i = 0, e = SlotData.Length; i < e; ++i)
-					ret += $"\t\t{ Indentify(SlotData[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
-				ret += "\t}\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			return ret + "}";
-		}
-	}
-
-	public struct ClientPlayerPositionUpdate : IEQStruct {
-		public ushort ID;
-		public ushort Sequence;
-		uint unknown0004;
-		public float X;
-		public float Y;
-		public ClientUpdatePositionSub1 Sub1;
-		public float DeltaX;
-		public float DeltaY;
-		public float Z;
-		public float DeltaZ;
-		public ClientUpdatePositionSub2 Sub2;
-
-		public ClientPlayerPositionUpdate(ushort ID, ushort Sequence, float X, float Y, ClientUpdatePositionSub1 Sub1, float DeltaX, float DeltaY, float Z, float DeltaZ, ClientUpdatePositionSub2 Sub2) : this() {
-			this.ID = ID;
-			this.Sequence = Sequence;
-			this.X = X;
-			this.Y = Y;
-			this.Sub1 = Sub1;
-			this.DeltaX = DeltaX;
-			this.DeltaY = DeltaY;
-			this.Z = Z;
-			this.DeltaZ = DeltaZ;
-			this.Sub2 = Sub2;
-		}
-
-		public ClientPlayerPositionUpdate(byte[] data, int offset = 0) : this() {
-			Unpack(data, offset);
-		}
-		public ClientPlayerPositionUpdate(BinaryReader br) : this() {
-			Unpack(br);
-		}
-		public void Unpack(byte[] data, int offset = 0) {
-			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
-				using(var br = new BinaryReader(ms)) {
-					Unpack(br);
-				}
-			}
-		}
-		public void Unpack(BinaryReader br) {
-			ID = br.ReadUInt16();
-			Sequence = br.ReadUInt16();
-			unknown0004 = br.ReadUInt32();
-			X = br.ReadSingle();
-			Y = br.ReadSingle();
-			Sub1 = new ClientUpdatePositionSub1(br);
-			DeltaX = br.ReadSingle();
-			DeltaY = br.ReadSingle();
-			Z = br.ReadSingle();
-			DeltaZ = br.ReadSingle();
-			Sub2 = new ClientUpdatePositionSub2(br);
-		}
-
-		public byte[] Pack() {
-			using(var ms = new MemoryStream()) {
-				using(var bw = new BinaryWriter(ms)) {
-					Pack(bw);
-					return ms.ToArray();
-				}
-			}
-		}
-		public void Pack(BinaryWriter bw) {
-			bw.Write(ID);
-			bw.Write(Sequence);
-			bw.Write(unknown0004);
-			bw.Write(X);
-			bw.Write(Y);
-			Sub1.Pack(bw);
-			bw.Write(DeltaX);
-			bw.Write(DeltaY);
-			bw.Write(Z);
-			bw.Write(DeltaZ);
-			Sub2.Pack(bw);
-		}
-
-		public override string ToString() {
-			var ret = "struct ClientPlayerPositionUpdate {\n";
-			ret += "\tID = ";
-			try {
-				ret += $"{ Indentify(ID) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tSequence = ";
-			try {
-				ret += $"{ Indentify(Sequence) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tX = ";
-			try {
-				ret += $"{ Indentify(X) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tY = ";
-			try {
-				ret += $"{ Indentify(Y) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tSub1 = ";
-			try {
-				ret += $"{ Indentify(Sub1) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDeltaX = ";
-			try {
-				ret += $"{ Indentify(DeltaX) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDeltaY = ";
-			try {
-				ret += $"{ Indentify(DeltaY) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tZ = ";
-			try {
-				ret += $"{ Indentify(Z) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDeltaZ = ";
-			try {
-				ret += $"{ Indentify(DeltaZ) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tSub2 = ";
-			try {
-				ret += $"{ Indentify(Sub2) }\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			return ret + "}";
-		}
-	}
-
-	public struct TaskActivity : IEQStruct {
-		public uint SequenceNumber;
-		public uint TaskID;
-		public uint ActivityID;
-		public uint ActivityType;
-		public uint Optional;
-		public string Text1;
-		public string Text2;
-		public uint GoalCount;
-		public uint ZoneID;
-		public string Text3;
-		public uint DoneCount;
-
-		public TaskActivity(uint SequenceNumber, uint TaskID, uint ActivityID, uint ActivityType, uint Optional, string Text1, string Text2, uint GoalCount, uint ZoneID, string Text3, uint DoneCount) : this() {
-			this.SequenceNumber = SequenceNumber;
-			this.TaskID = TaskID;
-			this.ActivityID = ActivityID;
-			this.ActivityType = ActivityType;
-			this.Optional = Optional;
-			this.Text1 = Text1;
-			this.Text2 = Text2;
-			this.GoalCount = GoalCount;
-			this.ZoneID = ZoneID;
-			this.Text3 = Text3;
-			this.DoneCount = DoneCount;
-		}
-
-		public TaskActivity(byte[] data, int offset = 0) : this() {
-			Unpack(data, offset);
-		}
-		public TaskActivity(BinaryReader br) : this() {
-			Unpack(br);
-		}
-		public void Unpack(byte[] data, int offset = 0) {
-			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
-				using(var br = new BinaryReader(ms)) {
-					Unpack(br);
-				}
-			}
-		}
-		public void Unpack(BinaryReader br) {
-			SequenceNumber = br.ReadUInt32();
-			br.ReadBytes(4);
-			TaskID = br.ReadUInt32();
-			ActivityID = br.ReadUInt32();
-			br.ReadBytes(4);
-			ActivityType = br.ReadUInt32();
-			Optional = br.ReadUInt32();
-			br.ReadBytes(4);
-			Text1 = br.ReadString(-1);
-			Text2 = br.ReadString(-1);
-			GoalCount = br.ReadUInt32();
-			br.ReadBytes(8);
-			ZoneID = br.ReadUInt32();
-			br.ReadBytes(4);
-			Text3 = br.ReadString(-1);
-			DoneCount = br.ReadUInt32();
-			br.ReadBytes(4);
-		}
-
-		public byte[] Pack() {
-			using(var ms = new MemoryStream()) {
-				using(var bw = new BinaryWriter(ms)) {
-					Pack(bw);
-					return ms.ToArray();
-				}
-			}
-		}
-		public void Pack(BinaryWriter bw) {
-			bw.Write(SequenceNumber);
-			bw.Write(new byte[4]);
-			bw.Write(TaskID);
-			bw.Write(ActivityID);
-			bw.Write(new byte[4]);
-			bw.Write(ActivityType);
-			bw.Write(Optional);
-			bw.Write(new byte[4]);
-			bw.Write(Text1.ToBytes());
-			bw.Write(Text2.ToBytes());
-			bw.Write(GoalCount);
-			bw.Write(new byte[8]);
-			bw.Write(ZoneID);
-			bw.Write(new byte[4]);
-			bw.Write(Text3.ToBytes());
-			bw.Write(DoneCount);
-			bw.Write(new byte[4]);
-		}
-
-		public override string ToString() {
-			var ret = "struct TaskActivity {\n";
-			ret += "\tSequenceNumber = ";
-			try {
-				ret += $"{ Indentify(SequenceNumber) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tTaskID = ";
-			try {
-				ret += $"{ Indentify(TaskID) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tActivityID = ";
-			try {
-				ret += $"{ Indentify(ActivityID) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tActivityType = ";
-			try {
-				ret += $"{ Indentify(ActivityType) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tOptional = ";
-			try {
-				ret += $"{ Indentify(Optional) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tText1 = ";
-			try {
-				ret += $"{ Indentify(Text1) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tText2 = ";
-			try {
-				ret += $"{ Indentify(Text2) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tGoalCount = ";
-			try {
-				ret += $"{ Indentify(GoalCount) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tZoneID = ";
-			try {
-				ret += $"{ Indentify(ZoneID) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tText3 = ";
-			try {
-				ret += $"{ Indentify(Text3) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDoneCount = ";
-			try {
-				ret += $"{ Indentify(DoneCount) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			return ret + "}";
-		}
-	}
-
-	public struct Spawn : IEQStruct {
-		public string Name;
-		public uint SpawnID;
-		public byte Level;
-		public CharType CharType;
-		public SpawnBitfields SpawnFlags;
-		public byte OtherFlags;
-		public float Size;
-		public byte Face;
-		public float WalkSpeed;
-		public float RunSpeed;
-		public Race Race;
-		public byte ShowName;
-		public uint BodyType;
-		public byte CurHP;
-		public byte HairColor;
-		public byte BeardColor;
-		public byte EyeColor1;
-		public byte EyeColor2;
-		public byte HairStyle;
-		public byte Beard;
-		public uint DrakkinHeritage;
-		public uint DrakkinTattoo;
-		public uint DrakkinDetails;
-		public byte Statue;
-		public uint Deity;
-		public uint GuildID;
-		public GuildRank GuildRank;
-		public byte Class;
-		public bool PVP;
-		public byte StandState;
-		public byte Light;
-		public byte FlyMode;
-		public byte EquipChest2;
-		public byte Helm;
-		public string LastName;
-		public AATitle AATitle;
-		public uint PetOwnerID;
-		public uint PlayerState;
-		public SpawnPosition Position;
-		public TintProfile EquipmentTint;
-		public TextureProfile Equipment;
-		public string Title;
-		public string Suffix;
-		public bool IsMercenary;
-
-		public Spawn(string Name, uint SpawnID, byte Level, CharType CharType, SpawnBitfields SpawnFlags, byte OtherFlags, float Size, byte Face, float WalkSpeed, float RunSpeed, Race Race, byte ShowName, uint BodyType, byte CurHP, byte HairColor, byte BeardColor, byte EyeColor1, byte EyeColor2, byte HairStyle, byte Beard, uint DrakkinHeritage, uint DrakkinTattoo, uint DrakkinDetails, byte Statue, uint Deity, uint GuildID, GuildRank GuildRank, byte Class, bool PVP, byte StandState, byte Light, byte FlyMode, byte EquipChest2, byte Helm, string LastName, AATitle AATitle, uint PetOwnerID, uint PlayerState, SpawnPosition Position, TintProfile EquipmentTint, TextureProfile Equipment, string Title, string Suffix, bool IsMercenary) : this() {
-			this.Name = Name;
-			this.SpawnID = SpawnID;
-			this.Level = Level;
-			this.CharType = CharType;
-			this.SpawnFlags = SpawnFlags;
-			this.OtherFlags = OtherFlags;
-			this.Size = Size;
-			this.Face = Face;
-			this.WalkSpeed = WalkSpeed;
-			this.RunSpeed = RunSpeed;
-			this.Race = Race;
-			this.ShowName = ShowName;
-			this.BodyType = BodyType;
-			this.CurHP = CurHP;
-			this.HairColor = HairColor;
-			this.BeardColor = BeardColor;
-			this.EyeColor1 = EyeColor1;
-			this.EyeColor2 = EyeColor2;
-			this.HairStyle = HairStyle;
-			this.Beard = Beard;
-			this.DrakkinHeritage = DrakkinHeritage;
-			this.DrakkinTattoo = DrakkinTattoo;
-			this.DrakkinDetails = DrakkinDetails;
-			this.Statue = Statue;
-			this.Deity = Deity;
-			this.GuildID = GuildID;
-			this.GuildRank = GuildRank;
-			this.Class = Class;
-			this.PVP = PVP;
-			this.StandState = StandState;
-			this.Light = Light;
-			this.FlyMode = FlyMode;
-			this.EquipChest2 = EquipChest2;
-			this.Helm = Helm;
-			this.LastName = LastName;
-			this.AATitle = AATitle;
-			this.PetOwnerID = PetOwnerID;
-			this.PlayerState = PlayerState;
-			this.Position = Position;
-			this.EquipmentTint = EquipmentTint;
-			this.Equipment = Equipment;
-			this.Title = Title;
-			this.Suffix = Suffix;
-			this.IsMercenary = IsMercenary;
-		}
-
-		public Spawn(byte[] data, int offset = 0) : this() {
-			Unpack(data, offset);
-		}
-		public Spawn(BinaryReader br) : this() {
-			Unpack(br);
-		}
-		public void Unpack(byte[] data, int offset = 0) {
-			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
-				using(var br = new BinaryReader(ms)) {
-					Unpack(br);
-				}
-			}
-		}
-		public void Unpack(BinaryReader br) {
-			Name = br.ReadString(-1);
-			SpawnID = br.ReadUInt32();
-			Level = br.ReadByte();
-			br.ReadBytes(4);
-			CharType = ((CharType) 0).Unpack(br);
-			SpawnFlags = new SpawnBitfields(br);
-			OtherFlags = br.ReadByte();
-			br.ReadBytes(8);
-			Size = br.ReadSingle();
-			Face = br.ReadByte();
-			WalkSpeed = br.ReadSingle();
-			RunSpeed = br.ReadSingle();
-			Race = ((Race) 0).Unpack(br);
-			ShowName = br.ReadByte();
-			BodyType = br.ReadUInt32();
-			CurHP = br.ReadByte();
-			HairColor = br.ReadByte();
-			BeardColor = br.ReadByte();
-			EyeColor1 = br.ReadByte();
-			EyeColor2 = br.ReadByte();
-			HairStyle = br.ReadByte();
-			Beard = br.ReadByte();
-			DrakkinHeritage = br.ReadUInt32();
-			DrakkinTattoo = br.ReadUInt32();
-			DrakkinDetails = br.ReadUInt32();
-			Statue = br.ReadByte();
-			Deity = br.ReadUInt32();
-			GuildID = br.ReadUInt32();
-			GuildRank = ((GuildRank) 0).Unpack(br);
-			br.ReadBytes(3);
-			Class = br.ReadByte();
-			PVP = br.ReadByte() != 0;
-			StandState = br.ReadByte();
-			Light = br.ReadByte();
-			FlyMode = br.ReadByte();
-			EquipChest2 = br.ReadByte();
-			br.ReadBytes(2);
-			Helm = br.ReadByte();
-			LastName = br.ReadString(-1);
-			AATitle = ((AATitle) 0).Unpack(br);
-			br.ReadBytes(1);
-			PetOwnerID = br.ReadUInt32();
-			br.ReadBytes(1);
-			PlayerState = br.ReadUInt32();
-			br.ReadBytes(5*4);
-			Position = new SpawnPosition(br);
-			EquipmentTint = new TintProfile(br);
-			if(CharType == CharType.PC || (int) Race == 12 || (int) Race == 128 || (int) Race == 130 || (int) Race == 330 || (int) Race == 522) {
-				Equipment = new TextureProfile(br);
-			}
-			if((OtherFlags & 4) != 0) {
-				Title = br.ReadString(-1);
-			}
-			if((OtherFlags & 8) != 0) {
-				Suffix = br.ReadString(-1);
-			}
-			br.ReadBytes(8);
-			IsMercenary = br.ReadByte() != 0;
-			br.ReadBytes(28);
-		}
-
-		public byte[] Pack() {
-			using(var ms = new MemoryStream()) {
-				using(var bw = new BinaryWriter(ms)) {
-					Pack(bw);
-					return ms.ToArray();
-				}
-			}
-		}
-		public void Pack(BinaryWriter bw) {
-			bw.Write(Name.ToBytes());
-			bw.Write(SpawnID);
-			bw.Write(Level);
-			bw.Write(new byte[4]);
-			bw.Write((byte) CharType);
-			SpawnFlags.Pack(bw);
-			bw.Write(OtherFlags);
-			bw.Write(new byte[8]);
-			bw.Write(Size);
-			bw.Write(Face);
-			bw.Write(WalkSpeed);
-			bw.Write(RunSpeed);
-			bw.Write((uint) Race);
-			bw.Write(ShowName);
-			bw.Write(BodyType);
-			bw.Write(CurHP);
-			bw.Write(HairColor);
-			bw.Write(BeardColor);
-			bw.Write(EyeColor1);
-			bw.Write(EyeColor2);
-			bw.Write(HairStyle);
-			bw.Write(Beard);
-			bw.Write(DrakkinHeritage);
-			bw.Write(DrakkinTattoo);
-			bw.Write(DrakkinDetails);
-			bw.Write(Statue);
-			bw.Write(Deity);
-			bw.Write(GuildID);
-			bw.Write((sbyte) GuildRank);
-			bw.Write(new byte[3]);
-			bw.Write(Class);
-			bw.Write((byte) (PVP ? 1 : 0));
-			bw.Write(StandState);
-			bw.Write(Light);
-			bw.Write(FlyMode);
-			bw.Write(EquipChest2);
-			bw.Write(new byte[2]);
-			bw.Write(Helm);
-			bw.Write(LastName.ToBytes());
-			bw.Write((uint) AATitle);
-			bw.Write(new byte[1]);
-			bw.Write(PetOwnerID);
-			bw.Write(new byte[1]);
-			bw.Write(PlayerState);
-			bw.Write(new byte[5*4]);
-			Position.Pack(bw);
-			EquipmentTint.Pack(bw);
-			if(CharType == CharType.PC || (int) Race == 12 || (int) Race == 128 || (int) Race == 130 || (int) Race == 330 || (int) Race == 522) {
-				Equipment.Pack(bw);
-			}
-			if((OtherFlags & 4) != 0) {
-				bw.Write(Title.ToBytes());
-			}
-			if((OtherFlags & 8) != 0) {
-				bw.Write(Suffix.ToBytes());
-			}
-			bw.Write(new byte[8]);
-			bw.Write((byte) (IsMercenary ? 1 : 0));
-			bw.Write(new byte[28]);
-		}
-
-		public override string ToString() {
-			var ret = "struct Spawn {\n";
-			ret += "\tName = ";
-			try {
-				ret += $"{ Indentify(Name) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tSpawnID = ";
-			try {
-				ret += $"{ Indentify(SpawnID) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tLevel = ";
-			try {
-				ret += $"{ Indentify(Level) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tCharType = ";
-			try {
-				ret += $"{ Indentify(CharType) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tSpawnFlags = ";
-			try {
-				ret += $"{ Indentify(SpawnFlags) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tOtherFlags = ";
-			try {
-				ret += $"{ Indentify(OtherFlags) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tSize = ";
-			try {
-				ret += $"{ Indentify(Size) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tFace = ";
-			try {
-				ret += $"{ Indentify(Face) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tWalkSpeed = ";
-			try {
-				ret += $"{ Indentify(WalkSpeed) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tRunSpeed = ";
-			try {
-				ret += $"{ Indentify(RunSpeed) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tRace = ";
-			try {
-				ret += $"{ Indentify(Race) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tShowName = ";
-			try {
-				ret += $"{ Indentify(ShowName) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tBodyType = ";
-			try {
-				ret += $"{ Indentify(BodyType) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tCurHP = ";
-			try {
-				ret += $"{ Indentify(CurHP) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tHairColor = ";
-			try {
-				ret += $"{ Indentify(HairColor) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tBeardColor = ";
-			try {
-				ret += $"{ Indentify(BeardColor) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tEyeColor1 = ";
-			try {
-				ret += $"{ Indentify(EyeColor1) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tEyeColor2 = ";
-			try {
-				ret += $"{ Indentify(EyeColor2) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tHairStyle = ";
-			try {
-				ret += $"{ Indentify(HairStyle) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tBeard = ";
-			try {
-				ret += $"{ Indentify(Beard) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDrakkinHeritage = ";
-			try {
-				ret += $"{ Indentify(DrakkinHeritage) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDrakkinTattoo = ";
-			try {
-				ret += $"{ Indentify(DrakkinTattoo) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDrakkinDetails = ";
-			try {
-				ret += $"{ Indentify(DrakkinDetails) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tStatue = ";
-			try {
-				ret += $"{ Indentify(Statue) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDeity = ";
-			try {
-				ret += $"{ Indentify(Deity) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tGuildID = ";
-			try {
-				ret += $"{ Indentify(GuildID) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tGuildRank = ";
-			try {
-				ret += $"{ Indentify(GuildRank) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tClass = ";
-			try {
-				ret += $"{ Indentify(Class) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tPVP = ";
-			try {
-				ret += $"{ Indentify(PVP) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tStandState = ";
-			try {
-				ret += $"{ Indentify(StandState) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tLight = ";
-			try {
-				ret += $"{ Indentify(Light) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tFlyMode = ";
-			try {
-				ret += $"{ Indentify(FlyMode) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tEquipChest2 = ";
-			try {
-				ret += $"{ Indentify(EquipChest2) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tHelm = ";
-			try {
-				ret += $"{ Indentify(Helm) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tLastName = ";
-			try {
-				ret += $"{ Indentify(LastName) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tAATitle = ";
-			try {
-				ret += $"{ Indentify(AATitle) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tPetOwnerID = ";
-			try {
-				ret += $"{ Indentify(PetOwnerID) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tPlayerState = ";
-			try {
-				ret += $"{ Indentify(PlayerState) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tPosition = ";
-			try {
-				ret += $"{ Indentify(Position) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tEquipmentTint = ";
-			try {
-				ret += $"{ Indentify(EquipmentTint) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			if(CharType == CharType.PC || (int) Race == 12 || (int) Race == 128 || (int) Race == 130 || (int) Race == 330 || (int) Race == 522) {
-				ret += "\tEquipment = ";
-				try {
-					ret += $"{ Indentify(Equipment) },\n";
-				} catch(NullReferenceException) {
-					ret += "!!NULL!!\n";
-				}
-			}
-			if((OtherFlags & 4) != 0) {
-				ret += "\tTitle = ";
-				try {
-					ret += $"{ Indentify(Title) },\n";
-				} catch(NullReferenceException) {
-					ret += "!!NULL!!\n";
-				}
-			}
-			if((OtherFlags & 8) != 0) {
-				ret += "\tSuffix = ";
-				try {
-					ret += $"{ Indentify(Suffix) },\n";
-				} catch(NullReferenceException) {
-					ret += "!!NULL!!\n";
-				}
-			}
-			ret += "\tIsMercenary = ";
-			try {
-				ret += $"{ Indentify(IsMercenary) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			return ret + "}";
-		}
-	}
-
-	public struct ClientZoneEntry : IEQStruct {
-		uint unk;
-		public string CharName;
-
-		public ClientZoneEntry(string CharName) : this() {
-			this.CharName = CharName;
-		}
-
-		public ClientZoneEntry(byte[] data, int offset = 0) : this() {
-			Unpack(data, offset);
-		}
-		public ClientZoneEntry(BinaryReader br) : this() {
-			Unpack(br);
-		}
-		public void Unpack(byte[] data, int offset = 0) {
-			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
-				using(var br = new BinaryReader(ms)) {
-					Unpack(br);
-				}
-			}
-		}
-		public void Unpack(BinaryReader br) {
-			unk = br.ReadUInt32();
-			CharName = br.ReadString(64);
-		}
-
-		public byte[] Pack() {
-			using(var ms = new MemoryStream()) {
-				using(var bw = new BinaryWriter(ms)) {
-					Pack(bw);
-					return ms.ToArray();
-				}
-			}
-		}
-		public void Pack(BinaryWriter bw) {
-			bw.Write(unk);
-			bw.Write(CharName.ToBytes(64));
-		}
-
-		public override string ToString() {
-			var ret = "struct ClientZoneEntry {\n";
-			ret += "\tCharName = ";
-			try {
-				ret += $"{ Indentify(CharName) }\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			return ret + "}";
-		}
-	}
-
-	public struct AugSlot : IEQStruct {
-		public uint Type;
-		public bool Visible;
-
-		public AugSlot(uint Type, bool Visible) : this() {
-			this.Type = Type;
-			this.Visible = Visible;
-		}
-
-		public AugSlot(byte[] data, int offset = 0) : this() {
-			Unpack(data, offset);
-		}
-		public AugSlot(BinaryReader br) : this() {
-			Unpack(br);
-		}
-		public void Unpack(byte[] data, int offset = 0) {
-			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
-				using(var br = new BinaryReader(ms)) {
-					Unpack(br);
-				}
-			}
-		}
-		public void Unpack(BinaryReader br) {
-			Type = br.ReadUInt32();
-			Visible = br.ReadByte() != 0;
-			br.ReadBytes(1);
-		}
-
-		public byte[] Pack() {
-			using(var ms = new MemoryStream()) {
-				using(var bw = new BinaryWriter(ms)) {
-					Pack(bw);
-					return ms.ToArray();
-				}
-			}
-		}
-		public void Pack(BinaryWriter bw) {
-			bw.Write(Type);
-			bw.Write((byte) (Visible ? 1 : 0));
-			bw.Write(new byte[1]);
-		}
-
-		public override string ToString() {
-			var ret = "struct AugSlot {\n";
-			ret += "\tType = ";
-			try {
-				ret += $"{ Indentify(Type) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tVisible = ";
-			try {
-				ret += $"{ Indentify(Visible) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			return ret + "}";
-		}
-	}
-
-	public struct Money : IEQStruct {
-		public uint Platinum;
-		public uint Gold;
-		public uint Silver;
-		public uint Copper;
-
-		public Money(uint Platinum, uint Gold, uint Silver, uint Copper) : this() {
-			this.Platinum = Platinum;
-			this.Gold = Gold;
-			this.Silver = Silver;
-			this.Copper = Copper;
-		}
-
-		public Money(byte[] data, int offset = 0) : this() {
-			Unpack(data, offset);
-		}
-		public Money(BinaryReader br) : this() {
-			Unpack(br);
-		}
-		public void Unpack(byte[] data, int offset = 0) {
-			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
-				using(var br = new BinaryReader(ms)) {
-					Unpack(br);
-				}
-			}
-		}
-		public void Unpack(BinaryReader br) {
-			Platinum = br.ReadUInt32();
-			Gold = br.ReadUInt32();
-			Silver = br.ReadUInt32();
-			Copper = br.ReadUInt32();
-		}
-
-		public byte[] Pack() {
-			using(var ms = new MemoryStream()) {
-				using(var bw = new BinaryWriter(ms)) {
-					Pack(bw);
-					return ms.ToArray();
-				}
-			}
-		}
-		public void Pack(BinaryWriter bw) {
-			bw.Write(Platinum);
-			bw.Write(Gold);
-			bw.Write(Silver);
-			bw.Write(Copper);
-		}
-
-		public override string ToString() {
-			var ret = "struct Money {\n";
-			ret += "\tPlatinum = ";
-			try {
-				ret += $"{ Indentify(Platinum) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tGold = ";
-			try {
-				ret += $"{ Indentify(Gold) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tSilver = ";
-			try {
-				ret += $"{ Indentify(Silver) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tCopper = ";
-			try {
-				ret += $"{ Indentify(Copper) }\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			return ret + "}";
-		}
-	}
-
-	public struct SubLeadershipAA : IEQStruct {
-		public uint MarkNPC;
-		public uint NPCHealth;
-		public uint DelegateMainAssist;
-		public uint DelegateMarkNPC;
-		uint _4;
-		uint _5;
-		uint _6;
-		public uint SpellAwareness;
-		public uint OffenseEnhancement;
-		public uint ManaEnhancement;
-		public uint HealthEnhancement;
-		public uint HealthRegeneration;
-		public uint FindPathToPC;
-		public uint HealthOfTargetsTarget;
-		uint _14;
-		uint _15;
-
-		public SubLeadershipAA(uint MarkNPC, uint NPCHealth, uint DelegateMainAssist, uint DelegateMarkNPC, uint SpellAwareness, uint OffenseEnhancement, uint ManaEnhancement, uint HealthEnhancement, uint HealthRegeneration, uint FindPathToPC, uint HealthOfTargetsTarget) : this() {
-			this.MarkNPC = MarkNPC;
-			this.NPCHealth = NPCHealth;
-			this.DelegateMainAssist = DelegateMainAssist;
-			this.DelegateMarkNPC = DelegateMarkNPC;
-			this.SpellAwareness = SpellAwareness;
-			this.OffenseEnhancement = OffenseEnhancement;
-			this.ManaEnhancement = ManaEnhancement;
-			this.HealthEnhancement = HealthEnhancement;
-			this.HealthRegeneration = HealthRegeneration;
-			this.FindPathToPC = FindPathToPC;
-			this.HealthOfTargetsTarget = HealthOfTargetsTarget;
-		}
-
-		public SubLeadershipAA(byte[] data, int offset = 0) : this() {
-			Unpack(data, offset);
-		}
-		public SubLeadershipAA(BinaryReader br) : this() {
-			Unpack(br);
-		}
-		public void Unpack(byte[] data, int offset = 0) {
-			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
-				using(var br = new BinaryReader(ms)) {
-					Unpack(br);
-				}
-			}
-		}
-		public void Unpack(BinaryReader br) {
-			MarkNPC = br.ReadUInt32();
-			NPCHealth = br.ReadUInt32();
-			DelegateMainAssist = br.ReadUInt32();
-			DelegateMarkNPC = br.ReadUInt32();
-			_4 = br.ReadUInt32();
-			_5 = br.ReadUInt32();
-			_6 = br.ReadUInt32();
-			SpellAwareness = br.ReadUInt32();
-			OffenseEnhancement = br.ReadUInt32();
-			ManaEnhancement = br.ReadUInt32();
-			HealthEnhancement = br.ReadUInt32();
-			HealthRegeneration = br.ReadUInt32();
-			FindPathToPC = br.ReadUInt32();
-			HealthOfTargetsTarget = br.ReadUInt32();
-			_14 = br.ReadUInt32();
-			_15 = br.ReadUInt32();
-		}
-
-		public byte[] Pack() {
-			using(var ms = new MemoryStream()) {
-				using(var bw = new BinaryWriter(ms)) {
-					Pack(bw);
-					return ms.ToArray();
-				}
-			}
-		}
-		public void Pack(BinaryWriter bw) {
-			bw.Write(MarkNPC);
-			bw.Write(NPCHealth);
-			bw.Write(DelegateMainAssist);
-			bw.Write(DelegateMarkNPC);
-			bw.Write(_4);
-			bw.Write(_5);
-			bw.Write(_6);
-			bw.Write(SpellAwareness);
-			bw.Write(OffenseEnhancement);
-			bw.Write(ManaEnhancement);
-			bw.Write(HealthEnhancement);
-			bw.Write(HealthRegeneration);
-			bw.Write(FindPathToPC);
-			bw.Write(HealthOfTargetsTarget);
-			bw.Write(_14);
-			bw.Write(_15);
-		}
-
-		public override string ToString() {
-			var ret = "struct SubLeadershipAA {\n";
-			ret += "\tMarkNPC = ";
-			try {
-				ret += $"{ Indentify(MarkNPC) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tNPCHealth = ";
-			try {
-				ret += $"{ Indentify(NPCHealth) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDelegateMainAssist = ";
-			try {
-				ret += $"{ Indentify(DelegateMainAssist) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDelegateMarkNPC = ";
-			try {
-				ret += $"{ Indentify(DelegateMarkNPC) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tSpellAwareness = ";
-			try {
-				ret += $"{ Indentify(SpellAwareness) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tOffenseEnhancement = ";
-			try {
-				ret += $"{ Indentify(OffenseEnhancement) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tManaEnhancement = ";
-			try {
-				ret += $"{ Indentify(ManaEnhancement) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tHealthEnhancement = ";
-			try {
-				ret += $"{ Indentify(HealthEnhancement) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tHealthRegeneration = ";
-			try {
-				ret += $"{ Indentify(HealthRegeneration) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tFindPathToPC = ";
-			try {
-				ret += $"{ Indentify(FindPathToPC) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tHealthOfTargetsTarget = ";
-			try {
-				ret += $"{ Indentify(HealthOfTargetsTarget) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			return ret + "}";
-		}
-	}
-
-	public struct TaskDescription : IEQStruct {
-		public uint SequenceNumber;
-		public uint TaskID;
-		public string Title;
-		public uint Duration;
-		public uint StartTime;
-		public string Description;
-		public uint RewardCount;
-		public string RewardText;
-		public uint Points;
-
-		public TaskDescription(uint SequenceNumber, uint TaskID, string Title, uint Duration, uint StartTime, string Description, uint RewardCount, string RewardText, uint Points) : this() {
-			this.SequenceNumber = SequenceNumber;
-			this.TaskID = TaskID;
-			this.Title = Title;
-			this.Duration = Duration;
-			this.StartTime = StartTime;
-			this.Description = Description;
-			this.RewardCount = RewardCount;
-			this.RewardText = RewardText;
-			this.Points = Points;
-		}
-
-		public TaskDescription(byte[] data, int offset = 0) : this() {
-			Unpack(data, offset);
-		}
-		public TaskDescription(BinaryReader br) : this() {
-			Unpack(br);
-		}
-		public void Unpack(byte[] data, int offset = 0) {
-			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
-				using(var br = new BinaryReader(ms)) {
-					Unpack(br);
-				}
-			}
-		}
-		public void Unpack(BinaryReader br) {
-			SequenceNumber = br.ReadUInt32();
-			TaskID = br.ReadUInt32();
-			br.ReadBytes(4*2+1);
-			Title = br.ReadString(-1);
-			Duration = br.ReadUInt32();
-			br.ReadBytes(4);
-			StartTime = br.ReadUInt32();
-			Description = br.ReadString(-1);
-			RewardCount = br.ReadUInt32();
-			br.ReadBytes(4*2+2);
-			RewardText = br.ReadString(-1);
-			Points = br.ReadUInt32();
-		}
-
-		public byte[] Pack() {
-			using(var ms = new MemoryStream()) {
-				using(var bw = new BinaryWriter(ms)) {
-					Pack(bw);
-					return ms.ToArray();
-				}
-			}
-		}
-		public void Pack(BinaryWriter bw) {
-			bw.Write(SequenceNumber);
-			bw.Write(TaskID);
-			bw.Write(new byte[4*2+1]);
-			bw.Write(Title.ToBytes());
-			bw.Write(Duration);
-			bw.Write(new byte[4]);
-			bw.Write(StartTime);
-			bw.Write(Description.ToBytes());
-			bw.Write(RewardCount);
-			bw.Write(new byte[4*2+2]);
-			bw.Write(RewardText.ToBytes());
-			bw.Write(Points);
-		}
-
-		public override string ToString() {
-			var ret = "struct TaskDescription {\n";
-			ret += "\tSequenceNumber = ";
-			try {
-				ret += $"{ Indentify(SequenceNumber) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tTaskID = ";
-			try {
-				ret += $"{ Indentify(TaskID) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tTitle = ";
-			try {
-				ret += $"{ Indentify(Title) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDuration = ";
-			try {
-				ret += $"{ Indentify(Duration) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tStartTime = ";
-			try {
-				ret += $"{ Indentify(StartTime) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tDescription = ";
-			try {
-				ret += $"{ Indentify(Description) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tRewardCount = ";
-			try {
-				ret += $"{ Indentify(RewardCount) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tRewardText = ";
-			try {
-				ret += $"{ Indentify(RewardText) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tPoints = ";
-			try {
-				ret += $"{ Indentify(Points) }\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			return ret + "}";
-		}
-	}
-
-	public struct Weather : IEQStruct {
-		public uint Val1;
-		public WeatherType Type;
-
-		public Weather(uint Val1, WeatherType Type) : this() {
-			this.Val1 = Val1;
-			this.Type = Type;
-		}
-
-		public Weather(byte[] data, int offset = 0) : this() {
-			Unpack(data, offset);
-		}
-		public Weather(BinaryReader br) : this() {
-			Unpack(br);
-		}
-		public void Unpack(byte[] data, int offset = 0) {
-			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
-				using(var br = new BinaryReader(ms)) {
-					Unpack(br);
-				}
-			}
-		}
-		public void Unpack(BinaryReader br) {
-			Val1 = br.ReadUInt32();
-			Type = ((WeatherType) 0).Unpack(br);
-		}
-
-		public byte[] Pack() {
-			using(var ms = new MemoryStream()) {
-				using(var bw = new BinaryWriter(ms)) {
-					Pack(bw);
-					return ms.ToArray();
-				}
-			}
-		}
-		public void Pack(BinaryWriter bw) {
-			bw.Write(Val1);
-			bw.Write((uint) Type);
-		}
-
-		public override string ToString() {
-			var ret = "struct Weather {\n";
-			ret += "\tVal1 = ";
-			try {
-				ret += $"{ Indentify(Val1) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tType = ";
-			try {
-				ret += $"{ Indentify(Type) }\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			return ret + "}";
-		}
-	}
-
-	public struct FindableNPC : IEQStruct {
-		public bool Remove;
-		public uint EntityID;
-		public string Name;
-		public string LastName;
-		public uint Race;
-		public byte Class;
-
-		public FindableNPC(bool Remove, uint EntityID, string Name, string LastName, uint Race, byte Class) : this() {
-			this.Remove = Remove;
-			this.EntityID = EntityID;
-			this.Name = Name;
-			this.LastName = LastName;
-			this.Race = Race;
-			this.Class = Class;
-		}
-
-		public FindableNPC(byte[] data, int offset = 0) : this() {
-			Unpack(data, offset);
-		}
-		public FindableNPC(BinaryReader br) : this() {
-			Unpack(br);
-		}
-		public void Unpack(byte[] data, int offset = 0) {
-			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
-				using(var br = new BinaryReader(ms)) {
-					Unpack(br);
-				}
-			}
-		}
-		public void Unpack(BinaryReader br) {
-			Remove = br.ReadUInt32() != 0;
-			EntityID = br.ReadUInt32();
-			Name = br.ReadString(64);
-			LastName = br.ReadString(32);
-			Race = br.ReadUInt32();
-			Class = br.ReadByte();
-			br.ReadBytes(3);
-		}
-
-		public byte[] Pack() {
-			using(var ms = new MemoryStream()) {
-				using(var bw = new BinaryWriter(ms)) {
-					Pack(bw);
-					return ms.ToArray();
-				}
-			}
-		}
-		public void Pack(BinaryWriter bw) {
-			bw.Write((uint) (Remove ? 1 : 0));
-			bw.Write(EntityID);
-			bw.Write(Name.ToBytes(64));
-			bw.Write(LastName.ToBytes(32));
-			bw.Write(Race);
-			bw.Write(Class);
-			bw.Write(new byte[3]);
-		}
-
-		public override string ToString() {
-			var ret = "struct FindableNPC {\n";
-			ret += "\tRemove = ";
-			try {
-				ret += $"{ Indentify(Remove) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tEntityID = ";
-			try {
-				ret += $"{ Indentify(EntityID) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tName = ";
-			try {
-				ret += $"{ Indentify(Name) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tLastName = ";
-			try {
-				ret += $"{ Indentify(LastName) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tRace = ";
-			try {
-				ret += $"{ Indentify(Race) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			ret += "\tClass = ";
-			try {
-				ret += $"{ Indentify(Class) },\n";
-			} catch(NullReferenceException) {
-				ret += "!!NULL!!\n";
-			}
-			return ret + "}";
-		}
-	}
-
 	public struct ChannelMessage : IEQStruct {
 		public string To;
 		public string From;
+		uint unknown029;
 		public uint Language;
 		public uint ChanNum;
-		uint unknown029;
 		uint unknown030;
+		byte unknown031;
 		public uint LanguageSkill;
 		public string Message;
 
@@ -7307,12 +7575,13 @@ namespace OpenEQ.Netcode {
 			}
 		}
 		public void Unpack(BinaryReader br) {
-			To = br.ReadString(64);
-			From = br.ReadString(64);
+			To = br.ReadString(-1);
+			From = br.ReadString(-1);
+			unknown029 = br.ReadUInt32();
 			Language = br.ReadUInt32();
 			ChanNum = br.ReadUInt32();
-			unknown029 = br.ReadUInt32();
 			unknown030 = br.ReadUInt32();
+			unknown031 = br.ReadByte();
 			LanguageSkill = br.ReadUInt32();
 			Message = br.ReadString(-1);
 		}
@@ -7326,12 +7595,13 @@ namespace OpenEQ.Netcode {
 			}
 		}
 		public void Pack(BinaryWriter bw) {
-			bw.Write(To.ToBytes(64));
-			bw.Write(From.ToBytes(64));
+			bw.Write(To.ToBytes(-1));
+			bw.Write(From.ToBytes(-1));
+			bw.Write(unknown029);
 			bw.Write(Language);
 			bw.Write(ChanNum);
-			bw.Write(unknown029);
 			bw.Write(unknown030);
+			bw.Write(unknown031);
 			bw.Write(LanguageSkill);
 			bw.Write(Message.ToBytes(-1));
 		}
@@ -7371,6 +7641,80 @@ namespace OpenEQ.Netcode {
 			ret += "\tMessage = ";
 			try {
 				ret += $"{ Indentify(Message) }\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct SaveOnZoneReq : IEQStruct {
+		public byte[] Part1;
+		public byte[] Part2;
+
+		public SaveOnZoneReq(byte[] Part1, byte[] Part2) : this() {
+			this.Part1 = Part1;
+			this.Part2 = Part2;
+		}
+
+		public SaveOnZoneReq(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public SaveOnZoneReq(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			Part1 = new byte[192];
+			for(var i = 0; i < 192; ++i) {
+				Part1[i] = br.ReadByte();
+			}
+			Part2 = new byte[176];
+			for(var i = 0; i < 176; ++i) {
+				Part2[i] = br.ReadByte();
+			}
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			for(var i = 0; i < 192; ++i) {
+				bw.Write(Part1[i]);
+			}
+			for(var i = 0; i < 176; ++i) {
+				bw.Write(Part2[i]);
+			}
+		}
+
+		public override string ToString() {
+			var ret = "struct SaveOnZoneReq {\n";
+			ret += "\tPart1 = ";
+			try {
+				ret += "{\n";
+				for(int i = 0, e = Part1.Length; i < e; ++i)
+					ret += $"\t\t{ Indentify(Part1[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
+				ret += "\t},\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tPart2 = ";
+			try {
+				ret += "{\n";
+				for(int i = 0, e = Part2.Length; i < e; ++i)
+					ret += $"\t\t{ Indentify(Part2[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
+				ret += "\t}\n";
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}

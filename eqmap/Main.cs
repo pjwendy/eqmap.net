@@ -23,6 +23,8 @@ namespace eqmap
         private Account account;
         private Log log;
         private Lua lua;
+        private Chat chat;
+        private Zone zone;
         private LoginStream loginStream;
         private WorldStream worldStream;
         private ZoneStream zoneStream;
@@ -38,19 +40,24 @@ namespace eqmap
             map.pb = pictureBox1;
 
             lua = new Lua();
-            log = new Log(this);
             account = new Account();
+            log = new Log(this);            
             account.OnLogon += Account_OnLogon;
             lua["account"] = account;
-            lua["log"] = log;
+            lua["log"] = log;            
             lua.RegisterFunction("SetLogonResultHandler", this, GetType().GetMethod("SetLogonResultHandler"));
-           
+            lua.RegisterFunction("SetMessageEventHandler", this, GetType().GetMethod("SetMessageEventHandler"));
+            lua.RegisterFunction("SetSpawnEventHandler", this, GetType().GetMethod("SetSpawnEventHandler"));
+
             this.button1.Click += Button1_Click;
             this.FormClosing += Form1_FormClosing;
             this.textBox1.DragEnter += TextBox1_DragEnter;
             this.textBox1.DragDrop += TextBox1_DragDrop;
             this.pictureBox1.MouseMove += PictureBox1_MouseMove;
             this.pictureBox1.Paint += PictureBox1_Paint;
+
+            if (File.Exists("log.txt"))
+                File.Delete("log.txt");
 
             // Create config for NLog so we can log to file as well as to file
             var config = new NLog.Config.LoggingConfiguration();
@@ -271,10 +278,19 @@ namespace eqmap
         #region Connect Zone
         void ConnectZone(string charName, string host, ushort port)
         {
+            string _charName = charName;
+            string _host = host;
+            ushort _port = port;
+
             Info("Connected");
-            spawns.Clear();
+            spawns.Clear();            
+            zoneStream = new ZoneStream(host, port, charName);            
+            chat = new Chat(account, zoneStream);
+            zone = new Zone(zoneStream);
+            lua["chat"] = chat;
+            lua["zone"] = zone;            
+
             CallLogonResult(true, "Connected");
-            zoneStream = new ZoneStream(host, port, charName);
             zoneStream.Spawned += (_, mob) =>
             {
                 Info($"Spawn {mob.Name} X:{mob.Position.X} Y:{mob.Position.Y}");               
@@ -284,6 +300,7 @@ namespace eqmap
                     spawns.TryAdd(mob.SpawnID, mob);
                     pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
                 }
+                CallSpawnEvent(mob);
             };
             zoneStream.PositionUpdated += (_, update) =>
             {   
@@ -323,9 +340,20 @@ namespace eqmap
                 MapReady = false;
                 loadMap();
                 button1.BeginInvoke((Action)delegate { button1.Enabled = true; });                
-                pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });                
-            };            
+                pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });               
+            };
+            zoneStream.Message += (_, message) =>
+            {
+                CallMessageEvent(message);
+            };
+            zoneStream.Zoned += (_, zone) =>
+            {
+                zoneStream.Disconnect();
+                ConnectZone(_charName, _host, _port);
+            };
         }
+
+       
         #endregion
 
         #region Various Form Initialisation Methods
@@ -392,8 +420,8 @@ namespace eqmap
 
         #region Zone
         private void Button1_Click(object sender, EventArgs e)
-        {
-            var zone = listBox1.SelectedItem.ToString();
+        {            
+            var zone = listBox1.SelectedItem.ToString();            
             zoneStream.SendChatMessage(string.Empty, string.Empty, $"#zone {zone}");
         }
         #endregion
@@ -493,7 +521,35 @@ namespace eqmap
 
         public void CallLogonResult(bool success, string reason)
         {
-            _LogonResultEventHandler(success, reason);
+            _LogonResultEventHandler?.Invoke(success, reason);
+        }
+
+        public delegate void SpawnEventHandler(object mob);
+
+        private SpawnEventHandler _SpawnEventHandler;
+
+        public void SetSpawnEventHandler(SpawnEventHandler eventHandler)
+        {
+            _SpawnEventHandler = eventHandler;
+        }
+
+        public void CallSpawnEvent(object mob)
+        {
+            _SpawnEventHandler?.Invoke(mob);
+        }
+
+        public delegate void MessageEventHandler(object mob);
+
+        private MessageEventHandler _MessageEventHandler;
+
+        public void SetMessageEventHandler(MessageEventHandler eventHandler)
+        {
+            _MessageEventHandler = eventHandler;
+        }
+
+        public void CallMessageEvent(ChannelMessage message)
+        {
+            _MessageEventHandler?.Invoke(message);
         }
 
         #region Internal Classes
@@ -552,6 +608,6 @@ namespace eqmap
             if (map.zoom == 0.0f)
                 map.zoom = 0.1f;
             pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
-        }
+        }        
     }
 }

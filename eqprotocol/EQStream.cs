@@ -290,7 +290,6 @@ namespace OpenEQ.Netcode {
 
 			conn.Send(data);
 		}
-
 		protected void Send(AppPacket packet) {
 			if(packet.Size > 512 - 7) {
                 // Fragment

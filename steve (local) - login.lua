@@ -8,7 +8,7 @@ SetLogonResultHandler(
 	function(success, reason)
 		log:Info(string.format("Logon %s %s", success, reason))
 		if (success) then
-		
+			
 		end
 	end
 )

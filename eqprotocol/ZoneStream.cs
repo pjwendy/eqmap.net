@@ -15,6 +15,8 @@ namespace OpenEQ.Netcode {
 		public event EventHandler<PlayerPositionUpdate> PositionUpdated;
         public event EventHandler<PlayerProfile> PlayerProfile;
         public event EventHandler<Death> Death;
+		public event EventHandler<ChannelMessage> Message;
+		public event EventHandler Zoned;
 
 		public ZoneStream(string host, int port, string charName) : base(host, port) {
 			SendKeepalives = true;
@@ -31,7 +33,7 @@ namespace OpenEQ.Netcode {
 		}
 
 		protected override void HandleAppPacket(AppPacket packet) {
-			Logger.Debug($"Zone app packet: {(ZoneOp) packet.Opcode}");
+			Logger.Debug($"Zone app packet: {(ZoneOp) packet.Opcode} : {((ZoneOp)packet.Opcode).ToString()}");
 			switch((ZoneOp) packet.Opcode) {
 				case ZoneOp.PlayerProfile:
 					var player = packet.Get<PlayerProfile>();
@@ -100,7 +102,7 @@ namespace OpenEQ.Netcode {
 						Entering = false;
 					}
 					break;
-
+				
 				case ZoneOp.CharInventory:
 					break;
 
@@ -116,7 +118,26 @@ namespace OpenEQ.Netcode {
 
 				case ZoneOp.HPUpdate:
 					break;
-				
+
+				case ZoneOp.ChannelMessage:
+					ChannelMessage msg = new ChannelMessage(packet.Data);
+					Logger.Debug(msg.ToString());
+					Message?.Invoke(this, msg);
+					break;
+
+				case ZoneOp.RequestClientZoneChange:
+					RequestClientZoneChange chg = new RequestClientZoneChange(packet.Data);
+					Logger.Debug(chg.ToString());					
+					SendZoneChange(chg.InstanceId, chg.ZoneID, chg.Y, chg.X, chg.Z);
+					break;
+
+				case ZoneOp.ZoneChange:
+					ZoneChange zoneChg = new ZoneChange(packet.Data);
+					Logger.Debug(zoneChg.ToString());
+					SendSaveOnZoneReq();
+					SendDeleteSpawn(PlayerSpawnId);
+					break;
+
 				case ZoneOp.SpawnDoor:
 					for(var i = 0; i < packet.Data.Length; i += 92) {
 						var door = new Door(packet.Data, i);
@@ -129,8 +150,17 @@ namespace OpenEQ.Netcode {
                     Death?.Invoke(this, dp);
                     break;
 
+				case ZoneOp.PreLogoutReply:
+					Logger.Debug("Logging Out of Zone");
+					break;
+
+				case ZoneOp.LogoutReply:
+					Logger.Debug("Logged Out of Zone");
+					Zoned?.Invoke(this, null);
+					break;
+
 				default:
-					Logger.Debug($"Unhandled packet in ZoneStream: {(ZoneOp) packet.Opcode} (0x{packet.Opcode:X04})");
+					Logger.Debug($"Unhandled packet in ZoneStream: {(ZoneOp) packet.Opcode} (0x{packet.Opcode:X04}) : {((ZoneOp)packet.Opcode).ToString()}");
 					Hexdump(packet.Data);
 					break;
 			}
@@ -162,5 +192,38 @@ namespace OpenEQ.Netcode {
             };
             Send(AppPacket.Create(ZoneOp.ChannelMessage, chat));
         }
+
+		public void SendZoneChange(ushort instanceId, ushort zoneId, float y, float x, float z)
+		{
+			var zone = new ZoneChange
+			{
+				Name = CharName,
+				InstanceId = instanceId,
+				ZoneID = zoneId,
+				Y = y,
+				X = x,
+				Z = z
+			};
+			Send(AppPacket.Create(ZoneOp.ZoneChange, zone));
+		}
+
+		public void SendSaveOnZoneReq()
+		{
+			var save = new SaveOnZoneReq
+			{
+				Part1 = new byte[192],
+				Part2 = new byte[176]
+			};
+			Send(AppPacket.Create(ZoneOp.SaveOnZoneReq, save));
+		}
+
+		public void SendDeleteSpawn(uint spawnId)
+		{
+			var spawn = new DeleteSpawn
+			{
+				SpawnId = spawnId
+			};
+			Send(AppPacket.Create(ZoneOp.DeleteSpawn, spawn));
+		}
 	}
 }

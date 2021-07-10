@@ -479,6 +479,8 @@
         MercenaryUnsuspendResponse = 0x5fe3,
         MercenaryDataUpdateRequest = 0x05f1,
         MercenaryDismiss = 0x319a,
-        MercenaryTimerRequest = 0x184e
+        MercenaryTimerRequest = 0x184e,
+        PreLogoutReply = 0x711e,
+        LogoutReply = 0x3cdc
     }
 }

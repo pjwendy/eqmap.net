@@ -35,7 +35,7 @@ namespace OpenEQ.Netcode {
 		}
 
 		protected override void HandleAppPacket(AppPacket packet) {
-			Logger.Debug($"WorldStream: {(WorldOp) packet.Opcode}");
+			Logger.Debug($"WorldStream: {(WorldOp) packet.Opcode} : {((WorldOp)packet.Opcode).ToString()} ");
 			switch((WorldOp) packet.Opcode) {
 				case WorldOp.GuildsList:
 					break;

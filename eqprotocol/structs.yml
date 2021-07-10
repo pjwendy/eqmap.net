@@ -701,21 +701,38 @@ zone:
       - uint32: unknown028
 
     ChannelMessage:      
-      - string[64]: To
-      - string[64]: From
+      - string[-1]: To
+      - string[-1]: From
+      - uint32: unknown029
       - uint32: Language
       - uint32: ChanNum
-      - uint32: unknown029
       - uint32: unknown030
+      - uint8:  unknown031
       - uint32: LanguageSkill
       - string[-1]: Message
-
-     ZoneChange:
-      - string[64]: CharacterName
-      - unit16: ZoneID
-      - unit16: InstanceId
+      
+    RequestClientZoneChange:      
+      - uint16: ZoneID
+      - uint16: InstanceId
       - float: Y
       - float: X
       - float: Z
-      - unit32: ZoneReason
+      - float: Heading
+      - int32: unknown032
+
+    ZoneChange:
+      - string[64]: Name
+      - uint16: ZoneID
+      - uint16: InstanceId
+      - float: Y
+      - float: X
+      - float: Z
+      - uint32: ZoneReason
       - int32: Success
+      
+    SaveOnZoneReq:
+      - uint8[192]: Part1
+      - uint8[176]: Part2
+
+    DeleteSpawn:
+      - uint32: SpawnId

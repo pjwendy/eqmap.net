@@ -6,6 +6,7 @@ using static OpenEQ.Netcode.Utility;
 
 namespace OpenEQ.Netcode {
     public class Packet {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         public bool Bare;
         public ushort Opcode;
         public byte[] Data;
@@ -119,8 +120,8 @@ namespace OpenEQ.Netcode {
             return val;
         }
 
-        public virtual byte[] Bake(EQStream stream) {
-            if(Baked != null)
+        public virtual byte[] Bake(EQStream stream) {            
+            if (Baked != null)
                 return Baked;
             
             if(Bare) {
@@ -180,7 +181,7 @@ namespace OpenEQ.Netcode {
     }
 
     public class AppPacket {
-        public ushort Opcode;
+        public ushort Opcode;       
         public byte[] Data;
 
         public int Size => (Data != null ? Data.Length : 0) + 2;
