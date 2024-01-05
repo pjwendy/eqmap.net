@@ -1,0 +1,49 @@
+task decode {
+	doLast {
+		def files = ["rof.cpp", "rof2.cpp", "sod.cpp", "sof.cpp", "titanium.cpp", "uf.cpp"]
+		
+		files.each { file ->
+			new File("C:\\EQ\\Server\\common\\patches\\${file}").text = new File("C:\\EQ\\Server\\common\\patches\\${file}.backup").text
+			def patch = new File("C:\\EQ\\Server\\common\\patches\\$file").newInputStream()	
+			println file
+			def skipnext = false
+			def encodefound = ""
+			def newfile = new StringBuilder()
+
+			//new File("C:\\EQ\\Server\\common\\patches\\${file}.backup").text = new File("C:\\EQ\\Server\\common\\patches\\${file}").text
+						
+			patch.eachLine {
+
+				if (skipnext)
+					skipnext = false
+				else {
+					if (encodefound != "" && (it.startsWith("\t}") || it.startsWith("    }"))) {												
+						newfile.append("\n")
+						newfile.append("\t\tLogInfo(\"$encodefound - $file size:[{}]\", __packet->size);\n")
+						newfile.append("\t\tLogInfo(DumpPacketHexToString((uchar*)__packet->pBuffer, __packet->size));\n")						
+						encodefound = ""
+					}				
+					newfile.append("$it\n")	
+				}
+					
+				if (it.contains("DECODE(OP_") && (!it.contains("Log(") && !it.contains("LogTrading("))) {
+					def opcode = it.replace("DECODE(","").replace(")","").trim()
+					skipnext = true
+					newfile.append("\t{\n")
+					newfile.append("\t\tLogInfo(\"DECODE($opcode) - $file size:[{}]\", __packet->size);\n")
+					newfile.append("\t\tLogInfo(DumpPacketHexToString((uchar*)__packet->pBuffer, __packet->size));\n")
+					newfile.append("\n")
+				}
+				
+				if (it.contains("ENCODE(OP_") && (!it.contains("Log(") && !it.contains("LogNetcode(") && !it.contains("LogTrading(") && !it.contains("EAT_ENCODE("))) {
+					//encodefound = it.replace("ENCODE(","").replace(")","").trim()
+				}				
+			}
+			
+			new File("C:\\EQ\\Server\\common\\patches\\${file}").text = newfile.toString()
+		}
+	}
+}
+
+//LogInfo("OP_ChannelMessage - uf.cpp size:[{}]", __packet->size);
+//LogInfo(DumpPacketHexToString((uchar*)__packet->pBuffer, __packet->size));

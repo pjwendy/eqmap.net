@@ -1,38 +1,59 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using MoreLinq;
+using NLog;
 using OpenEQ.Netcode;
 using static System.Console;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace NetClient {
 	internal class Program {
-		static string Input(string prompt) {
-			Write($"{prompt} > ");
+
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
+        static string Input(string prompt) {
+			Info($"{prompt} > ");
 			return ReadLine().TrimEnd();
 		}
 		
 		static void Main(string[] args) {
-            WriteLine("Starting eqconsole");
+            if (File.Exists("log.txt"))
+                File.Delete("log.txt");
 
-            var host = GetIndexValueOrDefault(args, 0, "login.eqemulator.net", (string value) => value);
+            // Create config for NLog so we can log to file as well as to file
+            var config = new NLog.Config.LoggingConfiguration();
+
+            // Targets where to log to: File and Console
+            var logfile = new NLog.Targets.FileTarget("logfile") { FileName = "log.txt" };
+
+            // Rules for mapping loggers to targets            
+            config.AddRule(LogLevel.Debug, LogLevel.Fatal, logfile);
+
+            // Apply config           
+            NLog.LogManager.Configuration = config;
+
+            Info("Starting eqconsole");
+
+            var host = GetIndexValueOrDefault(args, 0, "127.0.0.1", (string value) => value);
             var port = GetIndexValueOrDefault(args, 1, 5999,        (string value) => int.Parse(value));
-            WriteLine($"Connecting to LoginServer @ {host}:{port}");
+            Info($"Connecting to LoginServer @ {host}:{port}");
 
             while(true) {
 				var loginStream = new LoginStream(host, port);
 				loginStream.LoginSuccess += (_, success) => {
 					if(success) {
-						WriteLine($"Login succeeded (accountID={loginStream.AccountID}).  Requesting server list");
+						Info($"Login succeeded (accountID={loginStream.AccountID}).  Requesting server list");
 						loginStream.RequestServerList();
 					} else {
-						WriteLine("Login failed");
+						Error("Login failed");
 						loginStream.Disconnect();
 					}
 				};
 
 				loginStream.ServerList += (_, servers) => {
 					servers.ForEach((serv, i) =>
-						WriteLine($"{i + 1}: {serv.Longname} ({serv.PlayersOnline} players online)"));
+						Info($"{i + 1}: {serv.Longname} ({serv.PlayersOnline} players online)"));
 					int ret;
 					while(!int.TryParse(Input("Server number"), out ret) || ret < 1 || servers.Count < ret) {}
 					loginStream.Play(servers[ret - 1]);
@@ -40,7 +61,7 @@ namespace NetClient {
 				
 				loginStream.PlaySuccess += (_, server) => {
 					if(server == null) {
-						WriteLine("Failed to connect to server.  Try everything again.");
+						Error("Failed to connect to server.  Try everything again.");
 						loginStream.Disconnect();
 						return;
 					}
@@ -68,13 +89,13 @@ namespace NetClient {
         }
 
         static void ConnectWorld(LoginStream ls, ServerListElement server) {
-			WriteLine($"Selected {server}.  Connecting.");
+			Info($"Selected {server}.  Connecting.");
 			var worldStream = new WorldStream(server.WorldIP, 9000, ls.AccountID, ls.SessionKey);
 			
 			string charName = null;
 			worldStream.CharacterList += (_, chars) => {
-				WriteLine("Select a character:");
-				WriteLine("0: Create a new character");
+				Info("Select a character:");
+				Info("0: Create a new character");
 				chars.ForEach((@char, i) => WriteLine($"{i + 1}: {@char.Name} - Level {@char.Level}"));
 				int ret;
 				while(!int.TryParse(Input("Character number"), out ret) || ret < 0 || chars.Count < ret) {}
@@ -96,10 +117,10 @@ namespace NetClient {
 
 			worldStream.CharacterCreateNameApproval += (_, success) => {
 				if(!success) {
-					WriteLine("Name not approved by server");
+					Info("Name not approved by server");
 					CreateCharacter();
 				} else {
-					WriteLine("Name approved, creating");
+					Info("Name approved, creating");
 					worldStream.SendCharacterCreate(new CharCreate {
 						Class_ = 1,
 						Haircolor = 255,
@@ -129,7 +150,7 @@ namespace NetClient {
 			};
 
 			worldStream.ZoneServer += (_, zs) => {
-				WriteLine($"Got zone server at {zs.Host}:{zs.Port}.  Connecting");
+				Info($"Got zone server at {zs.Host}:{zs.Port}.  Connecting");
 				ConnectZone(charName, zs.Host, zs.Port);
 			};
 		}
@@ -137,11 +158,23 @@ namespace NetClient {
 		static void ConnectZone(string charName, string host, ushort port) {
 			var zoneStream = new ZoneStream(host, port, charName);
 			zoneStream.Spawned += (_, mob) => {
-				WriteLine($"Spawn {mob.Name}");
+				Info($"Spawn {mob.Name}");
 			};
 			zoneStream.PositionUpdated += (_, update) => {
-				WriteLine($"Position updated: {update.ID} {update.Position}");
+				Info($"Position updated: {update.ID} {update.Position}");
 			};
 		}
-	}
+
+        static public void Info(string text)
+        {
+			WriteLine(text);
+            Logger.Info($"{text}");
+        }
+
+        static public void Error(string text)
+        {
+            WriteLine(text);
+            Logger.Error($"{text}");
+        }
+    }
 }

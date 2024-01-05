@@ -7,8 +7,10 @@ end;
 SetLogonResultHandler(
 	function(success, reason)
 		log:Info(string.format("Logon %s %s", success, reason))
-		if (success) then
-		
+		if (success) then			
+			msg = "Hello"
+			chat:Say(msg)	
+			log:Info(msg)	
 		end
 	end
 )

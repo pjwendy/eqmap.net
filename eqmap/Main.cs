@@ -359,13 +359,13 @@ namespace eqmap
         #region Various Form Initialisation Methods
         private void InitialiseZoneList()
         {
-            string server = "192.168.38.50";
-            string database = "peq";
+            string server = "localhost";
+            string database = "peq2";
+            string port = "3305";
             string uid = "peq";
-            string password = "!PEQTea4TwoBye4Now";
+            string password = "peq";
             string connectionString;
-            connectionString = "SERVER=" + server + ";" + "DATABASE=" +
-            database + ";" + "UID=" + uid + ";" + "PASSWORD=" + password + ";";
+            connectionString = $"SERVER={server};Port={port};DATABASE={database};UID={uid};PASSWORD={password};";
 
             MySqlConnection connection = new MySqlConnection(connectionString);
             connection.Open();

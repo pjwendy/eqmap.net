@@ -1,6 +1,6 @@
 function Main()
 	log:Info("Starting LUA script")
-	account:Logon("127.0.0.1",5999,"steve","tea4two","HoneyTree","Steve")
+	account:Logon("127.0.0.1",5999,"pjwendy","tea4two","HoneyTree","Steve")
 	log:Info("Logon sent")
 end;
 
