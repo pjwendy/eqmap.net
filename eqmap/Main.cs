@@ -3,12 +3,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
 using NLua;
 using OpenEQ.Netcode;
-using Newtonsoft.Json;
 using System.Drawing;
 using NLog;
+using MySqlConnector;
 
 namespace eqmap
 {
@@ -362,10 +361,9 @@ namespace eqmap
             string server = "localhost";
             string database = "peq2";
             string port = "3305";
-            string uid = "peq";
-            string password = "peq";
-            string connectionString;
-            connectionString = $"SERVER={server};Port={port};DATABASE={database};UID={uid};PASSWORD={password};";
+            string uid = "root";
+            string password = "eqemu";
+            string connectionString = $"SERVER={server};Port={port};DATABASE={database};UID={uid};PASSWORD={password};";
 
             MySqlConnection connection = new MySqlConnection(connectionString);
             connection.Open();
