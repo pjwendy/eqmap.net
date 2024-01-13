@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.1000
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34408.163
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eqmap", "eqmap\eqmap.csproj", "{25457231-183E-4AF1-A184-13B8609D6339}"
 EndProject
@@ -11,9 +11,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "zlib", "zlib\zlib.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eqconsole", "eqconsole\eqconsole.csproj", "{125181BE-8AF7-4C75-A2FC-9F5AA9ED6C92}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{B01FCB5F-2E7B-414F-B9E0-F51AEDB52F25}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{19707158-D33D-4917-908D-FF8A96BCDE1E}"
 	ProjectSection(SolutionItems) = preProject
-		login.lua = login.lua
+		scripts\bifar (docker) - login.lua = scripts\bifar (docker) - login.lua
+		scripts\bifar (honytree) - login.lua = scripts\bifar (honytree) - login.lua
+		scripts\bifar (local) - login.lua = scripts\bifar (local) - login.lua
+		scripts\eboola (local).lua = scripts\eboola (local).lua
+		scripts\steve (honytree) - login.lua = scripts\steve (honytree) - login.lua
+		scripts\steve (local) - login.lua = scripts\steve (local) - login.lua
 	EndProjectSection
 EndProject
 Global
