@@ -358,11 +358,11 @@ namespace eqmap
         #region Various Form Initialisation Methods
         private void InitialiseZoneList()
         {
-            string server = "localhost";
-            string database = "peq2";
-            string port = "3305";
-            string uid = "root";
-            string password = "eqemu";
+            string server = "host.docker.external";
+            string database = "peq";
+            string port = "3306";
+            string uid = "eqemu";
+            string password = "rK0erThGYUKfoJU7h25cnbIFMqZIura";
             string connectionString = $"SERVER={server};Port={port};DATABASE={database};UID={uid};PASSWORD={password};";
 
             MySqlConnection connection = new MySqlConnection(connectionString);
