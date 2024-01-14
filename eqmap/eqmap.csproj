@@ -6471,4 +6471,9 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\KeraLua.1.3.4\build\net46\KeraLua.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\KeraLua.1.3.4\build\net46\KeraLua.targets'))" />
   </Target>
+  <PropertyGroup>
+    <PreBuildEvent>c:\Windows\System32\xcopy $(SolutionDir)settings.json $(TargetDir)
+c:\Windows\System32\xcopy $(SolutionDir)dlls\lua54.dll $(TargetDir)
+c:\Windows\System32\xcopy $(SolutionDir)dlls\lua54.lib $(TargetDir)</PreBuildEvent>
+  </PropertyGroup>
 </Project>

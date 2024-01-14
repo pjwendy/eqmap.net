@@ -8,6 +8,7 @@ using OpenEQ.Netcode;
 using System.Drawing;
 using NLog;
 using MySqlConnector;
+using Newtonsoft.Json.Linq;
 
 namespace eqmap
 {
@@ -34,6 +35,7 @@ namespace eqmap
         public Main()
         {
             InitializeComponent();
+            InitialiseSettings();
             InitialiseZoneList();
 
             map.pb = pictureBox1;
@@ -354,6 +356,20 @@ namespace eqmap
 
        
         #endregion
+
+
+        private void InitialiseSettings()
+        {
+            if (!File.Exists("settings.json")) {
+                File.Copy("settings.json.template", "settings.json");
+                throw new Exception("You are missing your settings.json file, one has been created for you from settings.json.template" +
+                    @"\n\nTake a look at the settings and update and\or add missing values so asd to reflect your instance of eqemu");                    
+            } 
+            else
+            {
+                JObject settings = JObject.Parse(File.ReadAllText("settings.json"));
+            }
+        }
 
         #region Various Form Initialisation Methods
         private void InitialiseZoneList()
