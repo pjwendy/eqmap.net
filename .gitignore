@@ -10,3 +10,5 @@
 /zlib/bin
 /eqconsole/*.user
 /eqmap/*.user
+credentials.json
+/settings.json
