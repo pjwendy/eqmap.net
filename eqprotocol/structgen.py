@@ -368,7 +368,7 @@ class Bitfield(object):
 		print '\t\t}'
 
 		print '\t\tpublic void Unpack(byte[] data, int offset = 0) {'
-		print '\t\t\tusing(var ms = new MemoryStream(data, offset, data.Length - offset)) {'
+		print '\t\t\tusing(var ms = new MemoryStream(data, offset, data.Length - offset)) {' 
 		print '\t\t\t\tusing(var br = new BinaryReader(ms)) {'
 		print '\t\t\t\t\tUnpack(br);'
 		print '\t\t\t\t}'

@@ -4834,6 +4834,87 @@ namespace OpenEQ.Netcode {
 		}
 	}
 
+	public struct UpdateMovementEntry : IEQStruct {
+		public float Y;
+		public float X;
+		public float Z;
+		public byte Type;
+		uint timestamp;
+
+		public UpdateMovementEntry(float Y, float X, float Z, byte Type) : this() {
+			this.Y = Y;
+			this.X = X;
+			this.Z = Z;
+			this.Type = Type;
+		}
+
+		public UpdateMovementEntry(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public UpdateMovementEntry(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			Y = br.ReadSingle();
+			X = br.ReadSingle();
+			Z = br.ReadSingle();
+			Type = br.ReadByte();
+			timestamp = br.ReadUInt32();
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(Y);
+			bw.Write(X);
+			bw.Write(Z);
+			bw.Write(Type);
+			bw.Write(timestamp);
+		}
+
+		public override string ToString() {
+			var ret = "struct UpdateMovementEntry {\n";
+			ret += "\tY = ";
+			try {
+				ret += $"{ Indentify(Y) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tX = ";
+			try {
+				ret += $"{ Indentify(X) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tZ = ";
+			try {
+				ret += $"{ Indentify(Z) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tType = ";
+			try {
+				ret += $"{ Indentify(Type) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
 	public struct SpellBuff : IEQStruct {
 		public byte EffectType;
 		public byte Level;
