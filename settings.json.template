@@ -1,9 +1,0 @@
-{
-    "database" : {
-        "ip" : "host.docker.external",
-        "name" : "peq",
-        "port" : "3306",
-        "uid" : "eqemu",
-        "password" : ""
-    }
-}

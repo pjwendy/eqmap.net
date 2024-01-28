@@ -47,42 +47,43 @@ namespace OpenEQ.Netcode {
 					break;
 
 				case ZoneOp.TaskActivity:
-					// XXX: Handle short activities!
 					//var activity = packet.Get<TaskActivity>();
 					//Logger.Debug(activity);
 					break;
 
 				case ZoneOp.TaskDescription:
-					//var desc = packet.Get<TaskDescription>();
-					//Logger.Debug(desc);
+					var desc = packet.Get<TaskDescription>();
+					Logger.Debug(desc);
 					break;
 
 				case ZoneOp.CompletedTasks:
-					//var comp = packet.Get<CompletedTasks>();
-					//Logger.Debug(comp);
+					var comp = packet.Get<CompletedTasks>();
+					Logger.Debug(comp);
 					break;
 
 				case ZoneOp.XTargetResponse:
-					//var xt = packet.Get<XTarget>();
-					//Logger.Debug(xt);
+					var xt = packet.Get<XTarget>();
+					Logger.Debug(xt);
 					break;
 
 				case ZoneOp.Weather:
 					var weather = packet.Get<Weather>();
 					Logger.Debug(weather);
-
 					if(Entering)
+                    {
+						Send(AppPacket.Create(ZoneOp.AckPacket));
 						Send(AppPacket.Create(ZoneOp.ReqNewZone));
+					}						
 					break;
 
 				case ZoneOp.TributeTimer:
-					//var timer = packet.Get<TributeTimer>();
-					//Logger.Debug(timer);
+					var timer = packet.Get<TributeTimer>();
+					Logger.Debug(timer);
 					break;
 
 				case ZoneOp.TributeUpdate:
-					//var update = packet.Get<TributeInfo>();
-					//Logger.Debug(update);
+					var update = packet.Get<TributeInfo>();
+					Logger.Debug(update);
 					break;
 
 				case ZoneOp.ZoneEntry:
@@ -104,6 +105,8 @@ namespace OpenEQ.Netcode {
 					break;
 				
 				case ZoneOp.CharInventory:
+					var inventory = packet.Get<CharInventory>();
+					Logger.Debug(inventory);
 					break;
 
 				case ZoneOp.SendFindableNPCs:

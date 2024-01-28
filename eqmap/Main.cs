@@ -32,6 +32,7 @@ namespace eqmap
         private Map map = new Map();
         private Dictionary<string, string> zones = new Dictionary<string, string>();
         private ConcurrentDictionary<uint, Spawn> spawns = new ConcurrentDictionary<uint, Spawn>();
+        private dynamic settings;
         public Main()
         {
             InitializeComponent();
@@ -357,28 +358,29 @@ namespace eqmap
        
         #endregion
 
-
         private void InitialiseSettings()
         {
-            if (!File.Exists("settings.json")) {
-                File.Copy("settings.json.template", "settings.json");
-                throw new Exception("You are missing your settings.json file, one has been created for you from settings.json.template" +
-                    @"\n\nTake a look at the settings and update and\or add missing values so asd to reflect your instance of eqemu");                    
+            string file = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\.eqmap.net.settings.json";
+            if (!File.Exists(file)) {
+                File.Copy("settings.json", file);
+                throw new Exception("You are missing your settings.json file, one has been created for you from settings.json" +
+                    @"\n\nTake a look at the settings and update and\or add missing values so asd to reflect your instance of eqemu" +
+                    $@"\n\nYou settings can be found at {file}");
             } 
             else
             {
-                JObject settings = JObject.Parse(File.ReadAllText("settings.json"));
+                settings = JObject.Parse(File.ReadAllText(file));
             }
         }
 
         #region Various Form Initialisation Methods
         private void InitialiseZoneList()
         {
-            string server = "host.docker.external";
-            string database = "peq";
-            string port = "3306";
-            string uid = "eqemu";
-            string password = "rK0erThGYUKfoJU7h25cnbIFMqZIura";
+            string server = settings.database.ip;
+            string database = settings.database.name;
+            string port = settings.database.port;
+            string uid = settings.database.uid;
+            string password = settings.database.password;
             string connectionString = $"SERVER={server};Port={port};DATABASE={database};UID={uid};PASSWORD={password};";
 
             MySqlConnection connection = new MySqlConnection(connectionString);
@@ -622,6 +624,12 @@ namespace eqmap
             if (map.zoom == 0.0f)
                 map.zoom = 0.1f;
             pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
-        }        
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            Logs logs = new Logs(settings);
+            logs.Show();
+        }
     }
 }

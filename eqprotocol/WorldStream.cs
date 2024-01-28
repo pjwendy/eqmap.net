@@ -37,16 +37,20 @@ namespace OpenEQ.Netcode {
 		protected override void HandleAppPacket(AppPacket packet) {
 			Logger.Debug($"WorldStream: {(WorldOp) packet.Opcode} : {((WorldOp)packet.Opcode).ToString()} ");
 			switch((WorldOp) packet.Opcode) {
-				case WorldOp.GuildsList:
-					break;
+				case WorldOp.GuildsList:				
 				case WorldOp.LogServer:
 				case WorldOp.ApproveWorld:
 				case WorldOp.EnterWorld:
+				case WorldOp.PostEnterWorld:
 				case WorldOp.ExpansionInfo:
 					break;
 				case WorldOp.SendCharInfo:
 					var chars = new CharacterSelect(packet.Data);
 					CharacterList?.Invoke(this, chars.Characters);
+					// The emu doesn't do anything with ApproveWorld and WorldClientReady so we may be able to just skip them both.
+					Send(AppPacket.Create(WorldOp.ApproveWorld));
+					Send(AppPacket.Create(WorldOp.AckPacket));
+					Send(AppPacket.Create(WorldOp.WorldClientReady));
 					break;
 				case WorldOp.MessageOfTheDay:
 					MOTD?.Invoke(this, Encoding.ASCII.GetString(packet.Data));
@@ -58,11 +62,6 @@ namespace OpenEQ.Netcode {
 				case WorldOp.SetChatServer:
 				case WorldOp.SetChatServer2:
 					ChatServerList?.Invoke(this, Encoding.ASCII.GetString(packet.Data));
-					break;
-				case WorldOp.PostEnterWorld:
-					// The emu doesn't do anything with ApproveWorld and WorldClientReady so we may be able to just skip them both.
-					Send(AppPacket.Create(WorldOp.ApproveWorld));
-					Send(AppPacket.Create(WorldOp.WorldClientReady));
 					break;
 				case WorldOp.ApproveName:
 					CharacterCreateNameApproval?.Invoke(this, packet.Data[0] == 1);

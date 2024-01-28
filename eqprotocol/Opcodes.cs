@@ -1,4 +1,8 @@
 ﻿namespace OpenEQ.Netcode {
+
+    // All opcodes listed below are for the Underfoot client
+    // https://github.com/pjwendy/Server/blob/7fed8fc8c88aca3eca86062d7ef199f2f3160165/utils/patches/patch_UF.conf
+
     public enum SessionOp : ushort {
         Request = 0x0001, 
         Response = 0x0002, 
@@ -46,7 +50,8 @@
         WorldComplete = 0x441c, 
         SetChatServer = 0x7d90, 
         SetChatServer2 = 0x158f,
-        WorldClientReady = 0x7d05
+        WorldClientReady = 0x7d05,
+        AckPacket = 0x3594
     }
 
     public enum ZoneOp : ushort {

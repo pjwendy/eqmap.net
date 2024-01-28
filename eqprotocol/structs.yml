@@ -111,6 +111,9 @@ world:
       - string[128]: Host
       - uint16: Port
 
+    AckPacket:
+      - uint32: Unknown  
+
 zone:
   constants:
     MAX_PP_LANGUAGE: 25
@@ -736,3 +739,10 @@ zone:
 
     DeleteSpawn:
       - uint32: SpawnId
+
+    UpdateMovementEntry:
+      - float: Y
+      - float: X
+      - float: Z
+      - uint8: Type
+      - uint32: timestamp

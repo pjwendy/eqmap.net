@@ -12,3 +12,4 @@
 /eqmap/*.user
 credentials.json
 /settings.json
+/eqlog/obj/Debug

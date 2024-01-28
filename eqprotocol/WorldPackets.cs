@@ -709,6 +709,54 @@ namespace OpenEQ.Netcode {
 		}
 	}
 
+	public struct AckPacket : IEQStruct {
+		public uint Unknown;
+
+		public AckPacket(uint Unknown) : this() {
+			this.Unknown = Unknown;
+		}
+
+		public AckPacket(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+		public AckPacket(BinaryReader br) : this() {
+			Unpack(br);
+		}
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+		public void Unpack(BinaryReader br) {
+			Unknown = br.ReadUInt32();
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+		public void Pack(BinaryWriter bw) {
+			bw.Write(Unknown);
+		}
+
+		public override string ToString() {
+			var ret = "struct AckPacket {\n";
+			ret += "\tUnknown = ";
+			try {
+				ret += $"{ Indentify(Unknown) }\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
 	public struct CharacterSelect : IEQStruct {
 		uint charCount;
 		uint totalChars;
