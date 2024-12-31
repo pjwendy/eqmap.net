@@ -51,21 +51,28 @@ namespace eqmap
             lua.RegisterFunction("SetMessageEventHandler", this, GetType().GetMethod("SetMessageEventHandler"));
             lua.RegisterFunction("SetSpawnEventHandler", this, GetType().GetMethod("SetSpawnEventHandler"));
 
-            this.button1.Click += Button1_Click;
+            this.buttonZone.Click += Button1_Click;
             this.FormClosing += Form1_FormClosing;
-            this.textBox1.DragEnter += TextBox1_DragEnter;
-            this.textBox1.DragDrop += TextBox1_DragDrop;
+            this.pictureBox1.AllowDrop = true;
+            this.pictureBox1.DragEnter += PictureBox1_DragEnter;
+            this.pictureBox1.DragDrop += PictureBox1_DragDrop;
             this.pictureBox1.MouseMove += PictureBox1_MouseMove;
             this.pictureBox1.Paint += PictureBox1_Paint;
 
-            if (File.Exists("log.txt"))
-                File.Delete("log.txt");
+            if (!Directory.Exists("logs"))
+                Directory.CreateDirectory("logs");
+            if (File.Exists(@"logs\log.txt"))
+                File.Delete(@"logs\log.txt");
+            if (File.Exists(@"logs\handled.txt"))
+                File.Delete(@"logs\handled.txt");
+            if (File.Exists(@"logs\unhandled.txt"))
+                File.Delete(@"logs\unhandled.txt");
 
             // Create config for NLog so we can log to file as well as to file
             var config = new NLog.Config.LoggingConfiguration();
 
             // Targets where to log to: File and Console
-            var logfile = new NLog.Targets.FileTarget("logfile") { FileName = "log.txt" };
+            var logfile = new NLog.Targets.FileTarget("logfile") { FileName = @"logs\log.txt" };
 
             // Rules for mapping loggers to targets            
             config.AddRule(LogLevel.Debug, LogLevel.Fatal, logfile);
@@ -146,16 +153,14 @@ namespace eqmap
         {
             if (map.zone != String.Empty)
             {
-                label1.Visible = true;
-                button2.Visible = true;
-                button3.Visible = true;
-                label1.Text = $"{map.zone} x:({map.minX},{map.maxX}) y:({map.minY},{map.maxY}) pos:({map.adjustedX(-e.X)},{map.adjustedY(-e.Y)})";
+                labelMapCoordinates.Visible = true;
+                labelMapCoordinates.Text = $"{map.zone} x:({map.minX},{map.maxX}) y:({map.minY},{map.maxY}) pos:({map.adjustedX(-e.X)},{map.adjustedY(-e.Y)})";
             }
         }
         #endregion
 
         #region Run Lua Script 
-        private void TextBox1_DragDrop(object sender, DragEventArgs e)
+        private void PictureBox1_DragDrop(object sender, DragEventArgs e)
         {
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
             if (files.Length > 1)
@@ -174,7 +179,7 @@ namespace eqmap
                 }
             }
         }
-        private void TextBox1_DragEnter(object sender, DragEventArgs e)
+        private void PictureBox1_DragEnter(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
@@ -300,7 +305,7 @@ namespace eqmap
                 if (mob.CharType == CharType.NPC || mob.CharType == CharType.PC)
                 {
                     spawns.TryAdd(mob.SpawnID, mob);
-                    pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
+                    pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });                    
                 }
                 CallSpawnEvent(mob);
             };
@@ -322,6 +327,7 @@ namespace eqmap
                 tmpSpawn.Position.DeltaHeading = update.Position.DeltaHeading;
                 tmpSpawn.Position.Animation = update.Position.Animation;
                 spawns[update.ID] = tmpSpawn;
+                Info($"Position updated : {tmpSpawn.Name} ({update.ID})");
                 pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
             };
             zoneStream.Death += (_, death) =>
@@ -341,8 +347,8 @@ namespace eqmap
                 UpdateCharacter(player);               
                 MapReady = false;
                 loadMap();
-                button1.BeginInvoke((Action)delegate { button1.Enabled = true; });                
-                pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });               
+                buttonZone.BeginInvoke((Action)delegate { buttonZone.Enabled = true; });                
+                pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
             };
             zoneStream.Message += (_, message) =>
             {
@@ -419,7 +425,7 @@ namespace eqmap
             //return list to be displayed
             foreach (string zone in list)
                 if (fis.Contains(zone.Trim()))
-                    listBox1.Items.Add(zone);
+                    listboxZone.Items.Add(zone);
         }
         private void Form1_FormClosing(object sender, System.Windows.Forms.FormClosingEventArgs e)
         {
@@ -437,7 +443,7 @@ namespace eqmap
         #region Zone
         private void Button1_Click(object sender, EventArgs e)
         {            
-            var zone = listBox1.SelectedItem.ToString();            
+            var zone = listboxZone.SelectedItem.ToString();            
             zoneStream.SendChatMessage(string.Empty, string.Empty, $"#zone {zone}");
         }
         #endregion
@@ -450,26 +456,7 @@ namespace eqmap
         }
         public void Info(string text, LogSource source)
         {
-            if (this.textBox1.InvokeRequired)
-            {
-                SetLogCallback d = new SetLogCallback(Info);
-                this.Invoke(d, new object[] { text, source });
-            }
-            else
-            {
-                string ds = $"{DateTime.Now}";
-                switch (source)
-                {
-                    case LogSource.engine:
-                        this.textBox1.AppendText($"{ds}:{text}{Environment.NewLine}");
-                        break;
-                    case LogSource.lua:
-                        this.textBox3.AppendText($"{ds}:{text}{Environment.NewLine}");
-                        break;                    
-                }
-                Logger.Info($"{source}:{text}");                
-            }
-            Application.DoEvents();
+            Logger.Info($"{source}:{text}");                 
         }
         public void Error(string text)
         {
@@ -477,26 +464,7 @@ namespace eqmap
         }
         public void Error(string text, LogSource source)
         {
-            if (this.textBox1.InvokeRequired)
-            {
-                SetLogCallback d = new SetLogCallback(Error);
-                this.Invoke(d, new object[] { text, source });
-            }
-            else
-            {
-                string ds = $"{DateTime.Now}";
-                switch (source)
-                {
-                    case LogSource.engine:
-                        this.textBox1.AppendText($"Error:{ds}:{text}{Environment.NewLine}");
-                        break;
-                    case LogSource.lua:
-                        this.textBox3.AppendText($"Error:{ds}:{text}{Environment.NewLine}");
-                        break;                    
-                }
-                Logger.Error($"{source}:{text}");
-            }
-            Application.DoEvents();
+            Logger.Error($"{source}:{text}");            
         }
         #endregion
 
@@ -514,14 +482,14 @@ namespace eqmap
         private void UpdateCharacter(PlayerProfile player)
         {
             this.player = player;
-            if (this.textBox2.InvokeRequired)
+            if (this.textBoxCharacterInfo.InvokeRequired)
             {
                 SetPlayerProfileCallback d = new SetPlayerProfileCallback(UpdateCharacter);
                 this.Invoke(d, new object[] { player });
             }
             else
             {
-                this.textBox2.AppendText(player.ToString().Replace("\n", Environment.NewLine));
+                this.textBoxCharacterInfo.AppendText(player.ToString().Replace("\n", Environment.NewLine));
             }
             Application.DoEvents();
         }
@@ -609,27 +577,5 @@ namespace eqmap
         #endregion
 
         #endregion
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            map.zoom = map.zoom + 0.1f;
-            if (map.zoom > 2.0f)
-                map.zoom = 2.0f;
-            pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            map.zoom = map.zoom - 0.1f;
-            if (map.zoom == 0.0f)
-                map.zoom = 0.1f;
-            pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
-        }
-
-        private void button4_Click(object sender, EventArgs e)
-        {
-            Logs logs = new Logs(settings);
-            logs.Show();
-        }
     }
 }
