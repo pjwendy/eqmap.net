@@ -13,7 +13,7 @@ namespace NetClient {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
         static string Input(string prompt) {
-			Info($"{prompt} > ");
+			Logger.Info($"{prompt} > ");
 			return ReadLine().TrimEnd();
 		}
 		
@@ -33,27 +33,27 @@ namespace NetClient {
             // Apply config           
             NLog.LogManager.Configuration = config;
 
-            Info("Starting eqconsole");
+            Logger.Info("Starting eqconsole");
 
             var host = GetIndexValueOrDefault(args, 0, "127.0.0.1", (string value) => value);
             var port = GetIndexValueOrDefault(args, 1, 5999,        (string value) => int.Parse(value));
-            Info($"Connecting to LoginServer @ {host}:{port}");
+            Logger.Info($"Connecting to LoginServer @ {host}:{port}");
 
             while(true) {
 				var loginStream = new LoginStream(host, port);
 				loginStream.LoginSuccess += (_, success) => {
 					if(success) {
-						Info($"Login succeeded (accountID={loginStream.AccountID}).  Requesting server list");
+                        Logger.Info($"Login succeeded (accountID={loginStream.AccountID}).  Requesting server list");
 						loginStream.RequestServerList();
 					} else {
-						Error("Login failed");
+                        Logger.Error("Login failed");
 						loginStream.Disconnect();
 					}
 				};
 
 				loginStream.ServerList += (_, servers) => {
 					servers.ForEach((serv, i) =>
-						Info($"{i + 1}: {serv.Longname} ({serv.PlayersOnline} players online)"));
+                        Logger.Info($"{i + 1}: {serv.Longname} ({serv.PlayersOnline} players online)"));
 					int ret;
 					while(!int.TryParse(Input("Server number"), out ret) || ret < 1 || servers.Count < ret) {}
 					loginStream.Play(servers[ret - 1]);
@@ -61,7 +61,7 @@ namespace NetClient {
 				
 				loginStream.PlaySuccess += (_, server) => {
 					if(server == null) {
-						Error("Failed to connect to server.  Try everything again.");
+                        Logger.Error("Failed to connect to server.  Try everything again.");
 						loginStream.Disconnect();
 						return;
 					}
@@ -89,13 +89,13 @@ namespace NetClient {
         }
 
         static void ConnectWorld(LoginStream ls, ServerListElement server) {
-			Info($"Selected {server}.  Connecting.");
+            Logger.Info($"Selected {server}.  Connecting.");
 			var worldStream = new WorldStream(server.WorldIP, 9000, ls.AccountID, ls.SessionKey);
 			
 			string charName = null;
 			worldStream.CharacterList += (_, chars) => {
-				Info("Select a character:");
-				Info("0: Create a new character");
+                Logger.Info("Select a character:");
+                Logger.Info("0: Create a new character");
 				chars.ForEach((@char, i) => WriteLine($"{i + 1}: {@char.Name} - Level {@char.Level}"));
 				int ret;
 				while(!int.TryParse(Input("Character number"), out ret) || ret < 0 || chars.Count < ret) {}
@@ -117,10 +117,10 @@ namespace NetClient {
 
 			worldStream.CharacterCreateNameApproval += (_, success) => {
 				if(!success) {
-					Info("Name not approved by server");
+                    Logger.Info("Name not approved by server");
 					CreateCharacter();
 				} else {
-					Info("Name approved, creating");
+                    Logger.Info("Name approved, creating");
 					worldStream.SendCharacterCreate(new CharCreate {
 						Class_ = 1,
 						Haircolor = 255,
@@ -150,7 +150,7 @@ namespace NetClient {
 			};
 
 			worldStream.ZoneServer += (_, zs) => {
-				Info($"Got zone server at {zs.Host}:{zs.Port}.  Connecting");
+                Logger.Info($"Got zone server at {zs.Host}:{zs.Port}.  Connecting");
 				ConnectZone(charName, zs.Host, zs.Port);
 			};
 		}
@@ -158,23 +158,11 @@ namespace NetClient {
 		static void ConnectZone(string charName, string host, ushort port) {
 			var zoneStream = new ZoneStream(host, port, charName);
 			zoneStream.Spawned += (_, mob) => {
-				Info($"Spawn {mob.Name}");
+                Logger.Info($"Spawn {mob.Name}");
 			};
 			zoneStream.PositionUpdated += (_, update) => {
-				Info($"Position updated: {update.ID} {update.Position}");
+                Logger.Info($"Position updated: {update.ID} {update.Position}");
 			};
 		}
-
-        static public void Info(string text)
-        {
-			WriteLine(text);
-            Logger.Info($"{text}");
-        }
-
-        static public void Error(string text)
-        {
-            WriteLine(text);
-            Logger.Error($"{text}");
-        }
     }
 }

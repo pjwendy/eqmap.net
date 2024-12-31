@@ -2089,7 +2089,7 @@ namespace OpenEQ.Netcode {
 		}
 		public void Unpack(BinaryReader br) {
 			ItemCount = br.ReadUInt32();
-			Items = new SerializedItem[ItemCount];
+            Items = new SerializedItem[ItemCount];
 			for(var i = 0; i < ItemCount; ++i) {
 				Items[i] = new SerializedItem(br);
 			}
@@ -2437,8 +2437,8 @@ namespace OpenEQ.Netcode {
 		public SerializedItem(BinaryReader br) : this() {
 			Unpack(br);
 		}
-		public void Unpack(byte[] data, int offset = 0) {
-			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+		public void Unpack(byte[] data, int offset = 0) {            
+            using (var ms = new MemoryStream(data, offset, data.Length - offset)) {
 				using(var br = new BinaryReader(ms)) {
 					Unpack(br);
 				}
@@ -2614,11 +2614,14 @@ namespace OpenEQ.Netcode {
 			br.ReadBytes(1);
 			EvolveString = br.ReadUInt32();
 			br.ReadBytes(1+4*3);
-			SubItemCount = br.ReadUInt32();
-			SubItems = new SerializedItem[SubItemCount];
-			for(var i = 0; i < SubItemCount; ++i) {
-				SubItems[i] = new SerializedItem(br);
-			}
+            SubItemCount = br.ReadUInt32();
+            SubItems = new SerializedItem[SubItemCount];
+            Console.WriteLine($"Name : {Name}");
+            Console.WriteLine($"SubItemCount : {SubItemCount}");
+            for (var i = 0; i < SubItemCount; ++i)
+            {
+                SubItems[i] = new SerializedItem(br);
+            }
 		}
 
 		public byte[] Pack() {
