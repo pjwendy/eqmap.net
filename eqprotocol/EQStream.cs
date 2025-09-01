@@ -97,20 +97,28 @@ namespace OpenEQ.Netcode {
 		async void ReceiverAsync() {
 			try {
 				while(!Disconnecting) {
-					if(Debug)
-						Logger.Debug($"Waiting for packets on wire ({this})");
 					var data = await conn.Receive();
 					//ForegroundColor = ConsoleColor.Blue;
 					lastRecvSendTime = Time.Now;
 
+					var packet = new Packet(this, data);
+					
 					if(Debug) {
 						//ForegroundColor = ConsoleColor.DarkMagenta;
-						Logger.Debug($"Received packet ({this})");
-						Hexdump(data);
+						var sessionOpName = Enum.IsDefined(typeof(SessionOp), packet.Opcode) ? 
+						    Enum.GetName(typeof(SessionOp), packet.Opcode) : "Unknown";
+						
+						// Skip keepalive logging
+						if((SessionOp)packet.Opcode == SessionOp.KeepAlive) {
+							// Skip logging keepalive packets
+						} else {
+							var timestamp = DateTime.Now.ToString("MM-dd-yyyy HH:mm:ss");
+							var streamType = this.GetType().Name.Replace("Stream", "");
+							Logger.Debug($"{timestamp} | {streamType} | Packet S->C | [SESSION_{sessionOpName}] [0x{packet.Opcode:X04}] Size [{data.Length}]");
+							HexdumpServerStyle(data);
+						}
 						//ResetColor();
 					}
-
-					var packet = new Packet(this, data);
 					if(packet.Valid)
 						ProcessSessionPacket(packet);
 				}
@@ -168,11 +176,13 @@ namespace OpenEQ.Netcode {
 						Logger.Debug("} END OF COMBINED");
 					break;
 				default:
-					if(Debug) {
-						Logger.Debug($"Unknown packet received: {op} (0x{packet.Opcode:X04})");
-						Hexdump(packet.Data);
+					// Always log unknown session packets regardless of Debug flag
+					var streamType = this.GetType().Name.Replace("Stream", "");
+					Logger.Warn($"{streamType} | UNKNOWN SESSION PACKET | {op} (0x{packet.Opcode:X04}) Size [{packet.Data?.Length ?? 0}]");
+					if(packet.Data != null && packet.Data.Length > 0) {
+						Logger.Debug("Session packet data:");
+						HexdumpServerStyle(packet.Data);
 					}
-
 					break;
 			}
 		}
@@ -183,18 +193,18 @@ namespace OpenEQ.Netcode {
 					ProcessPacket(packet);
 				else if((packet.Sequence > InSequence && packet.Sequence - InSequence < 2048) ||
 				        (packet.Sequence + 65536) - InSequence < 2048) {
-					// Future
-					Logger.Debug($"Future packet :( Got {packet.Sequence}, need {InSequence}");
+					// Future - always log sequence issues regardless of Debug flag
+					var streamType = this.GetType().Name.Replace("Stream", "");
+					Logger.Warn($"{streamType} | FUTURE PACKET QUEUED | Got seq {packet.Sequence}, need {InSequence}");
 					futurePackets[packet.Sequence] = packet;
 					if(futurePackets[InSequence]?.Opcode == (ushort) SessionOp.Fragment
 					) // Maybe we have enough for the current fragment?
 						ProcessPacket(futurePackets[InSequence]);
 				} else if((packet.Sequence < InSequence && InSequence - packet.Sequence < 2048) ||
 				          packet.Sequence - (InSequence + 65536) < 2048) {
-					// Past
-					if(Debug)
-						Logger.Debug(
-							$"Got packet in the past... expect {InSequence} got {packet.Sequence}.  Sending ACK up to {(ushort) ((InSequence + 65536) % 65536)}");
+					// Past - always log sequence issues regardless of Debug flag
+					var streamType = this.GetType().Name.Replace("Stream", "");
+					Logger.Warn($"{streamType} | PAST PACKET DROPPED | Expected seq {InSequence}, got {packet.Sequence}. Sending ACK up to {(ushort) ((InSequence + 65536) % 65536)}");
 					resendAck = true;
 				}
 			}
@@ -203,11 +213,18 @@ namespace OpenEQ.Netcode {
 		void HandleAppPacketProxy(AppPacket packet) {
 			if(Debug) {
 				//ForegroundColor = ConsoleColor.Magenta;
-				Logger.Debug($"Received app packet (opcode {packet.Opcode:X04}, {this}):");
-				if(packet.Data == null)
-					Logger.Debug("!Null data!");
-				else
-					Hexdump(packet.Data);
+				var opcodeName = GetOpcodeNameForLogging(packet.Opcode);
+				var dataSize = packet.Data?.Length ?? 0;
+				var timestamp = DateTime.Now.ToString("MM-dd-yyyy HH:mm:ss");
+				var streamType = this.GetType().Name.Replace("Stream", "");
+				// Match server format: Size shows data only (excluding opcode)
+				Logger.Debug($"{timestamp} | {streamType} | Packet S->C | [{opcodeName}] [0x{packet.Opcode:X04}] Size [{dataSize}]");
+				if(packet.Data == null || packet.Data.Length == 0)
+					Logger.Debug("");  // Empty line for packets with no data
+				else {
+					// Server format: hex dump shows data only (no opcode)
+					HexdumpServerStyle(packet.Data);
+				}
 				//ResetColor();
 			}
 
@@ -283,8 +300,18 @@ namespace OpenEQ.Netcode {
 
 			if(Debug) {
                 //ForegroundColor = ConsoleColor.DarkGreen;
-                Logger.Debug($"Sending connection packet (from {this}):");
-				Hexdump(data);
+                var sessionOpName = Enum.IsDefined(typeof(SessionOp), packet.Opcode) ? 
+                    Enum.GetName(typeof(SessionOp), packet.Opcode) : "Unknown";
+                
+                // Skip keepalive logging
+                if((SessionOp)packet.Opcode == SessionOp.KeepAlive) {
+                    // Skip logging keepalive packets
+                } else {
+                    var timestamp = DateTime.Now.ToString("MM-dd-yyyy HH:mm:ss");
+                    var streamType = this.GetType().Name.Replace("Stream", "");
+                    Logger.Debug($"{timestamp} | {streamType} | Packet C->S | [SESSION_{sessionOpName}] [0x{packet.Opcode:X04}] Size [{data.Length}]");
+                    HexdumpServerStyle(data);
+                }
 				//ResetColor();
 			}
 
@@ -297,11 +324,18 @@ namespace OpenEQ.Netcode {
 			} else {
 				if(Debug) {
                     //ForegroundColor = ConsoleColor.Green;
-                    Logger.Debug($"Sending app packet (opcode {packet.Opcode:X04}, {this}):");
-					if(packet.Data == null)
-                        Logger.Debug("!Null data!");
-					else
-						Hexdump(packet);
+                    var opcodeName = GetOpcodeNameForLogging(packet.Opcode);
+                    var timestamp = DateTime.Now.ToString("MM-dd-yyyy HH:mm:ss");
+                    var streamType = this.GetType().Name.Replace("Stream", "");
+                    // Match server format: Size shows data only (excluding opcode)
+                    var dataSize = packet.Data?.Length ?? 0;
+                    Logger.Debug($"{timestamp} | {streamType} | Packet C->S | [{opcodeName}] [0x{packet.Opcode:X04}] Size [{dataSize}]");
+					if(packet.Data == null || packet.Data.Length == 0)
+                        Logger.Debug("");  // Empty line for packets with no data
+					else {
+						// Server format: hex dump shows data only (no opcode)
+						HexdumpServerStyle(packet.Data);
+					}
 					//ResetColor();
 				}
 
@@ -316,6 +350,40 @@ namespace OpenEQ.Netcode {
 
 		void SendRaw(byte[] packet) {
 			conn.Send(packet);
+		}
+
+		protected string GetOpcodeNameForLogging(ushort opcode) {
+			// Try to get opcode name from different enum types depending on stream type
+			var streamType = this.GetType().Name;
+			
+			try {
+				switch (streamType) {
+					case "LoginStream":
+						if (Enum.IsDefined(typeof(LoginOp), opcode)) {
+							return $"OP_{Enum.GetName(typeof(LoginOp), opcode)}";
+						}
+						break;
+					case "WorldStream":
+						if (Enum.IsDefined(typeof(WorldOp), opcode)) {
+							return $"OP_{Enum.GetName(typeof(WorldOp), opcode)}";
+						}
+						break;
+					case "ZoneStream":
+						if (Enum.IsDefined(typeof(ZoneOp), opcode)) {
+							return $"OP_{Enum.GetName(typeof(ZoneOp), opcode)}";
+						}
+						break;
+				}
+				
+				// Try session opcodes as fallback
+				if (Enum.IsDefined(typeof(SessionOp), opcode)) {
+					return $"SESSION_{Enum.GetName(typeof(SessionOp), opcode)}";
+				}
+			} catch {
+				// If enum lookup fails, just return Unknown
+			}
+			
+			return "OP_Unknown";
 		}
 
 		protected abstract void HandleSessionResponse(Packet packet);

@@ -876,4 +876,396 @@ namespace OpenEQ.Netcode {
 			return ret + "}";
 		}
 	}
+
+	public struct GuildEntry : IEQStruct {
+		public uint GuildID;
+		public string GuildName;
+
+		public GuildEntry(uint guildID, string guildName) : this() {
+			GuildID = guildID;
+			GuildName = guildName;
+		}
+
+		public GuildEntry(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+
+		public GuildEntry(BinaryReader br) : this() {
+			Unpack(br);
+		}
+
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+
+		public void Unpack(BinaryReader br) {
+			GuildID = br.ReadUInt32();
+			GuildName = br.ReadString(-1);
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+
+		public void Pack(BinaryWriter bw) {
+			bw.Write(GuildID);
+			bw.Write(GuildName.ToBytes());
+		}
+
+		public override string ToString() {
+			var ret = "struct GuildEntry {\n";
+			ret += "\tGuildID = ";
+			try {
+				ret += $"{ Indentify(GuildID) },\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			ret += "\tGuildName = ";
+			try {
+				ret += $"{ Indentify(GuildName) }\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct GuildsList : IEQStruct {
+		public List<GuildEntry> Guilds;
+
+		public GuildsList(List<GuildEntry> guilds) : this() {
+			Guilds = guilds;
+		}
+
+		public GuildsList(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+
+		public GuildsList(BinaryReader br) : this() {
+			Unpack(br);
+		}
+
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+
+		public void Unpack(BinaryReader br) {
+			// Skip 64-byte header
+			br.ReadBytes(64);
+			
+			// Read number of guilds
+			uint guildCount = br.ReadUInt32();
+			
+			Guilds = new List<GuildEntry>();
+			for(int i = 0; i < guildCount; i++) {
+				var guildEntry = new GuildEntry(br);
+				Guilds.Add(guildEntry);
+			}
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+
+		public void Pack(BinaryWriter bw) {
+			// Write 64-byte header (zeros)
+			bw.Write(new byte[64]);
+			
+			// Write guild count
+			bw.Write((uint)Guilds.Count);
+			
+			// Write each guild entry
+			foreach(var guild in Guilds) {
+				guild.Pack(bw);
+			}
+		}
+
+		public override string ToString() {
+			var ret = "struct GuildsList {\n";
+			ret += "\tGuilds = ";
+			try {
+				ret += "{\n";
+				for(int i = 0, e = Guilds.Count; i < e; ++i)
+					ret += $"\t\t{ Indentify(Guilds[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
+				ret += "\t}\n";
+			} catch(NullReferenceException) {
+				ret += "!!NULL!!\n";
+			}
+			return ret + "}";
+		}
+	}
+
+	public struct LogServer : IEQStruct {
+		public uint Unknown000;
+		public byte EnablePvp;
+		public byte Unknown005;
+		public byte Unknown006;
+		public byte Unknown007;
+		public byte EnableFV;
+		public byte Unknown009;
+		public byte Unknown010;
+		public byte Unknown011;
+		public uint Unknown012;
+		public uint Unknown016;
+		public byte[] Unknown020;
+		public uint Unknown032;
+		public string WorldShortName;
+		public byte[] Unknown064;
+		public string Unknown096;
+		public string Unknown112;
+		public byte[] Unknown128;
+
+		public LogServer(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+
+		public LogServer(BinaryReader br) : this() {
+			Unpack(br);
+		}
+
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+
+		public void Unpack(BinaryReader br) {
+			Unknown000 = br.ReadUInt32();
+			EnablePvp = br.ReadByte();
+			Unknown005 = br.ReadByte();
+			Unknown006 = br.ReadByte();
+			Unknown007 = br.ReadByte();
+			EnableFV = br.ReadByte();
+			Unknown009 = br.ReadByte();
+			Unknown010 = br.ReadByte();
+			Unknown011 = br.ReadByte();
+			Unknown012 = br.ReadUInt32();
+			Unknown016 = br.ReadUInt32();
+			Unknown020 = br.ReadBytes(12);
+			Unknown032 = br.ReadUInt32();
+			WorldShortName = br.ReadString(32);
+			Unknown064 = br.ReadBytes(32);
+			Unknown096 = br.ReadString(16);
+			Unknown112 = br.ReadString(16);
+			Unknown128 = br.ReadBytes(48);
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+
+		public void Pack(BinaryWriter bw) {
+			bw.Write(Unknown000);
+			bw.Write(EnablePvp);
+			bw.Write(Unknown005);
+			bw.Write(Unknown006);
+			bw.Write(Unknown007);
+			bw.Write(EnableFV);
+			bw.Write(Unknown009);
+			bw.Write(Unknown010);
+			bw.Write(Unknown011);
+			bw.Write(Unknown012);
+			bw.Write(Unknown016);
+			bw.Write(Unknown020);
+			bw.Write(Unknown032);
+			bw.Write(WorldShortName.ToBytes(32));
+			bw.Write(Unknown064);
+			bw.Write(Unknown096.ToBytes(16));
+			bw.Write(Unknown112.ToBytes(16));
+			bw.Write(Unknown128);
+		}
+
+		public override string ToString() {
+			var ret = "struct LogServer {\n";
+			ret += $"\tWorldShortName = {WorldShortName},\n";
+			ret += $"\tEnablePvp = {EnablePvp},\n";
+			ret += $"\tEnableFV = {EnableFV}\n";
+			return ret + "}";
+		}
+	}
+
+	public struct ExpansionInfo : IEQStruct {
+		public uint Expansions;
+
+		public ExpansionInfo(uint expansions) : this() {
+			Expansions = expansions;
+		}
+
+		public ExpansionInfo(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+
+		public ExpansionInfo(BinaryReader br) : this() {
+			Unpack(br);
+		}
+
+		public void Unpack(byte[] data, int offset = 0) {
+			using(var ms = new MemoryStream(data, offset, data.Length - offset)) {
+				using(var br = new BinaryReader(ms)) {
+					Unpack(br);
+				}
+			}
+		}
+
+		public void Unpack(BinaryReader br) {
+			Expansions = br.ReadUInt32();
+		}
+
+		public byte[] Pack() {
+			using(var ms = new MemoryStream()) {
+				using(var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+
+		public void Pack(BinaryWriter bw) {
+			bw.Write(Expansions);
+		}
+
+		public override string ToString() {
+			var ret = "struct ExpansionInfo {\n";
+			ret += $"\tExpansions = 0x{Expansions:X08}\n";
+			return ret + "}";
+		}
+	}
+
+	// Simple status structures for other opcodes
+	public struct ApproveWorld : IEQStruct {
+		public byte[] Data;
+
+		public ApproveWorld(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+
+		public ApproveWorld(BinaryReader br) : this() {
+			Unpack(br);
+		}
+
+		public void Unpack(byte[] data, int offset = 0) {
+			Data = new byte[data.Length - offset];
+			Array.Copy(data, offset, Data, 0, Data.Length);
+		}
+
+		public void Unpack(BinaryReader br) {
+			Data = br.ReadBytes((int)(br.BaseStream.Length - br.BaseStream.Position));
+		}
+
+		public byte[] Pack() { return Data; }
+		public void Pack(BinaryWriter bw) { bw.Write(Data); }
+
+		public override string ToString() {
+			return $"struct ApproveWorld {{ Size = {Data?.Length ?? 0} bytes }}";
+		}
+	}
+
+	public struct EnterWorldStatus : IEQStruct {
+		public byte[] Data;
+
+		public EnterWorldStatus(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+
+		public EnterWorldStatus(BinaryReader br) : this() {
+			Unpack(br);
+		}
+
+		public void Unpack(byte[] data, int offset = 0) {
+			Data = new byte[data.Length - offset];
+			Array.Copy(data, offset, Data, 0, Data.Length);
+		}
+
+		public void Unpack(BinaryReader br) {
+			Data = br.ReadBytes((int)(br.BaseStream.Length - br.BaseStream.Position));
+		}
+
+		public byte[] Pack() { return Data; }
+		public void Pack(BinaryWriter bw) { bw.Write(Data); }
+
+		public override string ToString() {
+			return $"struct EnterWorldStatus {{ Size = {Data?.Length ?? 0} bytes }}";
+		}
+	}
+
+	public struct PostEnterWorld : IEQStruct {
+		public byte[] Data;
+
+		public PostEnterWorld(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+
+		public PostEnterWorld(BinaryReader br) : this() {
+			Unpack(br);
+		}
+
+		public void Unpack(byte[] data, int offset = 0) {
+			Data = new byte[data.Length - offset];
+			Array.Copy(data, offset, Data, 0, Data.Length);
+		}
+
+		public void Unpack(BinaryReader br) {
+			Data = br.ReadBytes((int)(br.BaseStream.Length - br.BaseStream.Position));
+		}
+
+		public byte[] Pack() { return Data; }
+		public void Pack(BinaryWriter bw) { bw.Write(Data); }
+
+		public override string ToString() {
+			return $"struct PostEnterWorld {{ Size = {Data?.Length ?? 0} bytes }}";
+		}
+	}
+
+	public struct WorldComplete : IEQStruct {
+		public byte[] Data;
+
+		public WorldComplete(byte[] data, int offset = 0) : this() {
+			Unpack(data, offset);
+		}
+
+		public WorldComplete(BinaryReader br) : this() {
+			Unpack(br);
+		}
+
+		public void Unpack(byte[] data, int offset = 0) {
+			Data = new byte[data.Length - offset];
+			Array.Copy(data, offset, Data, 0, Data.Length);
+		}
+
+		public void Unpack(BinaryReader br) {
+			Data = br.ReadBytes((int)(br.BaseStream.Length - br.BaseStream.Position));
+		}
+
+		public byte[] Pack() { return Data; }
+		public void Pack(BinaryWriter bw) { bw.Write(Data); }
+
+		public override string ToString() {
+			return $"struct WorldComplete {{ Size = {Data?.Length ?? 0} bytes }}";
+		}
+	}
 }
