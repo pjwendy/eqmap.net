@@ -4,6 +4,7 @@
     "name": "peq",
     "port": "3306",
     "uid": "eqemu",
-    "password": ""
+    "password": "",
+    "eqemu-server": " honeytree-eqemu-server-1"
   }
 }

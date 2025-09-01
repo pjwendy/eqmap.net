@@ -193,6 +193,12 @@
     <Compile Include="Log.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServerLogs.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ServerLogs.Designer.cs">
+      <DependentUpon>ServerLogs.cs</DependentUpon>
+    </Compile>
     <Compile Include="Zone.cs" />
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
@@ -207,6 +213,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="ServerLogs.resx">
+      <DependentUpon>ServerLogs.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="lua54.lib">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

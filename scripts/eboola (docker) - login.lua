@@ -1,6 +1,6 @@
 function Main()
 	log:Info("Starting LUA script")
-	account:Logon("host.docker.external",5999,"bifar","tea4two","Honeytree","Eboola")
+	account:Logon("172.29.179.249",5999,"eboola","tea4two","Honeytree","Eboola")
 	log:Info("Logon sent")
 end;
 

@@ -28,9 +28,13 @@ namespace OpenEQ.Netcode {
 		protected override void HandleSessionResponse(Packet packet) {
 			Send(packet);
 
-			var data = new byte[464];
+			// LoginInfo_Struct must be exactly 488 bytes for UF client
+			var data = new byte[488];
+			// Format: "accountid\0sessionkey" in first 64 bytes
 			var str = $"{AccountID}\0{SessionKey}";
 			Array.Copy(Encoding.ASCII.GetBytes(str), data, str.Length);
+			// Byte 188: zoning flag (0x00 for initial login, 0x01 for zoning)
+			data[188] = 0x00; // Not zoning, initial login
 			Send(AppPacket.Create(WorldOp.SendLoginInfo, data));
 		}
 
@@ -39,18 +43,24 @@ namespace OpenEQ.Netcode {
 			switch((WorldOp) packet.Opcode) {
 				case WorldOp.GuildsList:				
 				case WorldOp.LogServer:
-				case WorldOp.ApproveWorld:
-				case WorldOp.EnterWorld:
-				case WorldOp.PostEnterWorld:
 				case WorldOp.ExpansionInfo:
+					// These are informational packets, no response needed
+					break;
+				case WorldOp.ApproveWorld:
+					// World approved our login, continue with character request
+					Logger.Debug("World approved, continuing...");
+					break;
+				case WorldOp.PostEnterWorld:
+					// World entry complete
+					Logger.Debug("PostEnterWorld received - world entry complete");
+					break;
+				case WorldOp.WorldComplete:
+					// World loading complete
+					Logger.Debug("WorldComplete received");
 					break;
 				case WorldOp.SendCharInfo:
 					var chars = new CharacterSelect(packet.Data);
 					CharacterList?.Invoke(this, chars.Characters);
-					// The emu doesn't do anything with ApproveWorld and WorldClientReady so we may be able to just skip them both.
-					Send(AppPacket.Create(WorldOp.ApproveWorld));
-					Send(AppPacket.Create(WorldOp.AckPacket));
-					Send(AppPacket.Create(WorldOp.WorldClientReady));
 					break;
 				case WorldOp.MessageOfTheDay:
 					MOTD?.Invoke(this, Encoding.ASCII.GetString(packet.Data));
