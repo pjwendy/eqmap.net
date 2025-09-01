@@ -27,6 +27,16 @@ namespace OpenEQ.Netcode {
                 Logger.Debug($"engine:{sb.ToString()}");
             }
         }
+        
+        // New server-log style hex dump
+        public static void HexdumpServerStyle(byte[] data) {
+            lock(printable) {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine(); // Start hex dump on a new line
+                sb.Append(FormatDataServerStyle(data));
+                Logger.Debug(sb.ToString());
+            }
+        }
 
         private static string FormatData(byte[] data) {
             StringBuilder sb = new StringBuilder();
@@ -58,6 +68,41 @@ namespace OpenEQ.Netcode {
             sb.AppendLine($"{data.Length:X04}");
             return sb.ToString();
         }
+
+        // Format data like the server log: "  0: 02 00 00 00 00 00 00 00 - 00 00              | ............"
+        private static string FormatDataServerStyle(byte[] data) {
+            StringBuilder sb = new StringBuilder();
+            for (var i = 0; i < data.Length; i += 16)
+            {
+                sb.Append($"{i,4}: ");
+                var chars = "";
+                for (var j = 0; j < 16; ++j)
+                {
+                    if (i + j < data.Length)
+                    {
+                        sb.Append($"{data[i + j]:X02} ");
+                        if (printable.Contains((char)data[i + j]))
+                            chars += (char)data[i + j];
+                        else
+                            chars += ".";
+                    }
+                    else
+                    {
+                        sb.Append("   ");
+                        chars += " ";
+                    }
+                    if (j == 7)
+                    {
+                        sb.Append("- ");
+                        chars += " ";
+                    }
+                }
+                sb.Append("| ");
+                sb.AppendLine(chars);
+            }
+            return sb.ToString();
+        }
+
         public static List<byte> ReadByte(this BinaryReader br, int count) {
             return Enumerable.Range(0, count).Select(x => br.ReadByte()).ToList();
         }

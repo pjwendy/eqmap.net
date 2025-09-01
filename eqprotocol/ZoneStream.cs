@@ -33,7 +33,12 @@ namespace OpenEQ.Netcode {
 		}
 
 		protected override void HandleAppPacket(AppPacket packet) {
-			Logger.Debug($"Zone app packet: {(ZoneOp) packet.Opcode} : {((ZoneOp)packet.Opcode).ToString()}");
+			var opcodeName = ((ZoneOp)packet.Opcode).ToString();
+			var timestamp = DateTime.Now.ToString("MM-dd-yyyy HH:mm:ss");
+			var streamType = this.GetType().Name.Replace("Stream", "");
+			Logger.Debug($"{timestamp} | {streamType} | Packet S->C | [{opcodeName}] [0x{packet.Opcode:X04}] Size [{packet.Size}]");
+			HexdumpServerStyle(packet.Data);
+			
 			switch((ZoneOp) packet.Opcode) {
 				case ZoneOp.PlayerProfile:
 					var player = packet.Get<PlayerProfile>();

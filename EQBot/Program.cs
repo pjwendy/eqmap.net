@@ -14,8 +14,13 @@ namespace EQBot
         private static ILogger<Program>? _logger;
         private static IConfiguration? _config;
 
-        public static async Task Main(string[] args)
+        public static async Task MainOriginal(string[] args)
         {
+            // Use the new SimpleBot instead of the original complex bot
+            await SimpleBotProgram.Main(args);
+            
+            // Original complex bot implementation - COMMENTED OUT
+            /*
             var host = CreateHostBuilder(args).Build();
             
             _logger = host.Services.GetRequiredService<ILogger<Program>>();
@@ -27,6 +32,7 @@ namespace EQBot
             await bot.StartAsync();
 
             _logger.LogInformation("Bot has exited");
+            */
         }
 
         private static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -38,16 +44,9 @@ namespace EQBot
                 });
     }
 
-    public class EQServerConfig
-    {
-        public string LoginServer { get; set; } = "";
-        public int LoginServerPort { get; set; } = 5999;
-        public string Username { get; set; } = "";
-        public string Password { get; set; } = "";
-        public string WorldName { get; set; } = "";
-        public string CharacterName { get; set; } = "";
-    }
 
+    // Original EQBotClient - COMMENTED OUT (replaced by EQGameClient abstraction)
+    /*
     public class EQBotClient
     {
         private readonly IConfiguration _config;
@@ -57,6 +56,9 @@ namespace EQBot
         private ZoneStream? _zoneStream;
         private string _characterName = "";
         private bool _isRunning = true;
+        
+        private TaskCompletionSource<bool>? _loginCompletionSource;
+        private TaskCompletionSource<bool>? _worldConnectionCompletionSource;
 
         public EQBotClient(IConfiguration config, ILogger<Program> logger)
         {
@@ -103,7 +105,11 @@ namespace EQBot
         {
             _logger.LogInformation("Connecting to login server...");
             
+            _loginCompletionSource = new TaskCompletionSource<bool>();
+            _worldConnectionCompletionSource = new TaskCompletionSource<bool>();
+            
             _loginStream = new LoginStream(config.LoginServer, config.LoginServerPort);
+            _loginStream.Debug = true; // Enable detailed packet logging
 
             // Set up login event handlers
             _loginStream.LoginSuccess += async (sender, success) =>
@@ -118,6 +124,7 @@ namespace EQBot
                 {
                     _logger.LogError("Login failed");
                     _isRunning = false;
+                    _loginCompletionSource?.SetResult(false);
                 }
             };
 
@@ -162,14 +169,12 @@ namespace EQBot
                     
                     // Send the PlayEverquestRequest to select this world server
                     _loginStream.Play(targetServer.Value);
-                    
-                    _logger.LogInformation("Connecting to world server: {ServerName}", targetServer.Value.Longname);
-                    await ConnectToWorldServerAsync(targetServer.Value, config);
                 }
                 else
                 {
                     _logger.LogError("Target world server '{WorldName}' not found", config.WorldName);
                     _isRunning = false;
+                    _loginCompletionSource?.SetResult(false);
                 }
             };
 
@@ -181,11 +186,17 @@ namespace EQBot
                         selectedServer.Value.Longname);
                     _logger.LogInformation("Ready to connect to world server at: {WorldIP}:9000", 
                         selectedServer.Value.WorldIP);
+                    
+                    // Now actually connect to world server
+                    _logger.LogInformation("Connecting to world server: {ServerName}", selectedServer.Value.Longname);
+                    await ConnectToWorldServerAsync(selectedServer.Value, config);
+                    _loginCompletionSource?.SetResult(true);
                 }
                 else
                 {
                     _logger.LogError("❌ PlayEverquestResponse FAILED: Server rejected connection");
                     _isRunning = false;
+                    _loginCompletionSource?.SetResult(false);
                 }
             };
 
@@ -193,8 +204,13 @@ namespace EQBot
             _logger.LogInformation("Sending login request...");
             _loginStream.Login(config.Username, config.Password);
 
-            // Wait a bit for the login process
-            await Task.Delay(5000);
+            // Wait for the entire login and world connection process to complete
+            var loginSuccess = await _loginCompletionSource.Task;
+            if (!loginSuccess)
+            {
+                _logger.LogError("Login process failed");
+                _isRunning = false;
+            }
         }
 
         private async Task ConnectToWorldServerAsync(ServerListElement server, EQServerConfig config)
@@ -208,6 +224,7 @@ namespace EQBot
             }
 
             _worldStream = new WorldStream(server.WorldIP, 9000, _loginStream.AccountID, _loginStream.SessionKey);
+            _worldStream.Debug = true; // Enable detailed packet logging
 
             // Set up world event handlers
             _worldStream.CharacterList += async (sender, characters) =>
@@ -241,7 +258,7 @@ namespace EQBot
             _worldStream.ZoneServer += async (sender, zoneServer) =>
             {
                 _logger.LogInformation("Received zone server info: {Host}:{Port}", zoneServer.Host, zoneServer.Port);
-                await ConnectToZoneServerAsync(zoneServer);
+                await ConnectToZoneServerAsync(zoneServer, config);
             };
 
             _worldStream.MOTD += (sender, motd) =>
@@ -253,11 +270,12 @@ namespace EQBot
             await Task.Delay(5000);
         }
 
-        private async Task ConnectToZoneServerAsync(ZoneServerInfo zoneServer)
+        private async Task ConnectToZoneServerAsync(ZoneServerInfo zoneServer, EQServerConfig config)
         {
             _logger.LogInformation("Connecting to zone server...");
             
             _zoneStream = new ZoneStream(zoneServer.Host, zoneServer.Port, _characterName);
+            _zoneStream.Debug = true; // Enable detailed packet logging
 
             // Set up zone event handlers
             _zoneStream.PlayerProfile += (sender, player) =>
@@ -351,4 +369,5 @@ namespace EQBot
             _loginStream = null;
         }
     }
+    */
 }

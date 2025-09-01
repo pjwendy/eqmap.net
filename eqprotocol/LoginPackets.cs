@@ -507,13 +507,20 @@ namespace OpenEQ.Netcode {
 	}
 
 	public struct PlayRequest : IEQStruct {
-		public ushort Sequence;
-		uint unk1;
-		uint unk2;
-		public uint ServerRuntimeID;
+		// LoginBaseMessage structure (10 bytes, no padding with #pragma pack(1))
+		public uint Sequence;       // int32_t sequence (4 bytes)
+		public byte Compressed;     // bool compressed (1 byte)
+		public byte EncryptType;    // int8_t encrypt_type (1 byte)
+		public uint Unk3;           // int32_t unk3 (4 bytes)
+		// PlayEverquestRequest specific
+		public uint ServerRuntimeID; // uint32 server_number (4 bytes)
+		// Total: 14 bytes
 
-		public PlayRequest(ushort Sequence, uint ServerRuntimeID) : this() {
+		public PlayRequest(uint Sequence, uint ServerRuntimeID) : this() {
 			this.Sequence = Sequence;
+			this.Compressed = 0;     // Not compressed
+			this.EncryptType = 0;    // No encryption
+			this.Unk3 = 0;          // Unused
 			this.ServerRuntimeID = ServerRuntimeID;
 		}
 
@@ -531,9 +538,11 @@ namespace OpenEQ.Netcode {
 			}
 		}
 		public void Unpack(BinaryReader br) {
-			Sequence = br.ReadUInt16();
-			unk1 = br.ReadUInt32();
-			unk2 = br.ReadUInt32();
+			Sequence = br.ReadUInt32();
+			Compressed = br.ReadByte();
+			EncryptType = br.ReadByte();
+			// No padding - #pragma pack(1) in server code
+			Unk3 = br.ReadUInt32();
 			ServerRuntimeID = br.ReadUInt32();
 		}
 
@@ -547,8 +556,10 @@ namespace OpenEQ.Netcode {
 		}
 		public void Pack(BinaryWriter bw) {
 			bw.Write(Sequence);
-			bw.Write(unk1);
-			bw.Write(unk2);
+			bw.Write(Compressed);
+			bw.Write(EncryptType);
+			// No padding - #pragma pack(1) in server code
+			bw.Write(Unk3);
 			bw.Write(ServerRuntimeID);
 		}
 

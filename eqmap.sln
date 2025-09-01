@@ -23,18 +23,21 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		scripts\steve (local) - login.lua = scripts\steve (local) - login.lua
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{A8B7C6D5-E4F3-2G1H-9I0J-K5L4M3N2O1P0}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{B9291FE1-CC2C-483F-AD0B-78636BB1FC7F}"
 	ProjectSection(SolutionItems) = preProject
-		docs\Project_Overview.md = docs\Project_Overview.md
-		docs\Development_Log.md = docs\Development_Log.md
 		docs\Architecture_Design.md = docs\Architecture_Design.md
-		docs\Current_Status.md = docs\Current_Status.md
-		docs\Repository_References.md = docs\Repository_References.md
 		docs\Client_Version_Analysis.md = docs\Client_Version_Analysis.md
-		docs\Opcode_Mapping_Strategy.md = docs\Opcode_Mapping_Strategy.md
-		docs\Underfoot_Protocol_Reference.md = docs\Underfoot_Protocol_Reference.md
-		docs\Protocol_Updates_Summary.md = docs\Protocol_Updates_Summary.md
 		docs\Critical_Protocol_Fix.md = docs\Critical_Protocol_Fix.md
+		docs\Current_Status.md = docs\Current_Status.md
+		docs\Development_Log.md = docs\Development_Log.md
+		docs\EQGameClient_API_Documentation.md = docs\EQGameClient_API_Documentation.md
+		docs\Opcode_Mapping_Strategy.md = docs\Opcode_Mapping_Strategy.md
+		docs\PACKET_STRUCTURES.md = docs\PACKET_STRUCTURES.md
+		docs\Project_Overview.md = docs\Project_Overview.md
+		docs\Protocol_Updates_Summary.md = docs\Protocol_Updates_Summary.md
+		docs\README_PROTOCOL.md = docs\README_PROTOCOL.md
+		docs\Repository_References.md = docs\Repository_References.md
+		docs\Underfoot_Protocol_Reference.md = docs\Underfoot_Protocol_Reference.md
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "network", "network\network.vcxproj", "{466A2C5F-32A3-4AEC-8D93-4E02C6B30C32}"
