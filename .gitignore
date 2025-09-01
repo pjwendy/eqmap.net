@@ -13,3 +13,13 @@
 credentials.json
 /settings.json
 /eqlog/obj/Debug
+/EQBot/bin/Debug/net8.0
+/EQBot/obj
+/eqmap/.vs
+/claude
+/eqviewer/bin/Debug/net8.0-windows
+/eqviewer/obj
+/network/x64
+/x64/Debug
+
+

@@ -90,7 +90,7 @@ namespace OpenEQ.Netcode {
 		}
 
 		public void RequestServerList() => 
-			Send(AppPacket.Create(LoginOp.ServerListRequest, new byte[] { 0, 0, 0, 0 }));
+			Send(AppPacket.Create(LoginOp.ServerListRequest, new byte[] { 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }));
 
 		public void Play(ServerListElement server) {
 			CurPlay = server;

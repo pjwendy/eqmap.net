@@ -23,9 +23,25 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		scripts\steve (local) - login.lua = scripts\steve (local) - login.lua
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{A8B7C6D5-E4F3-2G1H-9I0J-K5L4M3N2O1P0}"
+	ProjectSection(SolutionItems) = preProject
+		docs\Project_Overview.md = docs\Project_Overview.md
+		docs\Development_Log.md = docs\Development_Log.md
+		docs\Architecture_Design.md = docs\Architecture_Design.md
+		docs\Current_Status.md = docs\Current_Status.md
+		docs\Repository_References.md = docs\Repository_References.md
+		docs\Client_Version_Analysis.md = docs\Client_Version_Analysis.md
+		docs\Opcode_Mapping_Strategy.md = docs\Opcode_Mapping_Strategy.md
+		docs\Underfoot_Protocol_Reference.md = docs\Underfoot_Protocol_Reference.md
+		docs\Protocol_Updates_Summary.md = docs\Protocol_Updates_Summary.md
+		docs\Critical_Protocol_Fix.md = docs\Critical_Protocol_Fix.md
+	EndProjectSection
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "network", "network\network.vcxproj", "{466A2C5F-32A3-4AEC-8D93-4E02C6B30C32}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eqviewer", "eqviewer\eqviewer.csproj", "{D42031AE-E3D6-4FC9-8022-95E4CC15C8B3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EQBot", "EQBot\EQBot.csproj", "{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -109,6 +125,18 @@ Global
 		{D42031AE-E3D6-4FC9-8022-95E4CC15C8B3}.Release|x64.Build.0 = Release|Any CPU
 		{D42031AE-E3D6-4FC9-8022-95E4CC15C8B3}.Release|x86.ActiveCfg = Release|Any CPU
 		{D42031AE-E3D6-4FC9-8022-95E4CC15C8B3}.Release|x86.Build.0 = Release|Any CPU
+		{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}.Debug|x64.Build.0 = Debug|Any CPU
+		{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}.Debug|x86.Build.0 = Debug|Any CPU
+		{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}.Release|x64.ActiveCfg = Release|Any CPU
+		{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}.Release|x64.Build.0 = Release|Any CPU
+		{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}.Release|x86.ActiveCfg = Release|Any CPU
+		{B8E2C8F4-9A7D-4B6C-8F3E-1A2B3C4D5E6F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

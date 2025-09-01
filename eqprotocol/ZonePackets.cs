@@ -5864,11 +5864,16 @@ namespace OpenEQ.Netcode {
 	}
 
 	public struct ClientZoneEntry : IEQStruct {
-		uint unk;
+		uint unknown0000;  // Usually 0
 		public string CharName;
+		uint unknown0068;  // Zone-specific data
+		uint unknown0072;  // Additional flags
 
 		public ClientZoneEntry(string CharName) : this() {
 			this.CharName = CharName;
+			this.unknown0000 = 0;
+			this.unknown0068 = 0;
+			this.unknown0072 = 0;
 		}
 
 		public ClientZoneEntry(byte[] data, int offset = 0) : this() {
@@ -5885,8 +5890,10 @@ namespace OpenEQ.Netcode {
 			}
 		}
 		public void Unpack(BinaryReader br) {
-			unk = br.ReadUInt32();
+			unknown0000 = br.ReadUInt32();
 			CharName = br.ReadString(64);
+			unknown0068 = br.ReadUInt32();
+			unknown0072 = br.ReadUInt32();
 		}
 
 		public byte[] Pack() {
@@ -5898,8 +5905,10 @@ namespace OpenEQ.Netcode {
 			}
 		}
 		public void Pack(BinaryWriter bw) {
-			bw.Write(unk);
+			bw.Write(unknown0000);
 			bw.Write(CharName.ToBytes(64));
+			bw.Write(unknown0068);
+			bw.Write(unknown0072);
 		}
 
 		public override string ToString() {

@@ -79,6 +79,9 @@ namespace eqmap
 
             // Apply config           
             NLog.LogManager.Configuration = config;
+
+            ServerLogs serverLogs = new ServerLogs();
+            serverLogs.Show();
         }
 
         #region Draw Map

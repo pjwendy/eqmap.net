@@ -99,6 +99,7 @@ namespace OpenEQ.Netcode {
 
 				case ZoneOp.SendExpZonein:
 					if(Entering) {
+						Logger.Debug("SendExpZonein received, sending ClientReady");
 						Send(AppPacket.Create(ZoneOp.ClientReady));
 						Entering = false;
 					}
