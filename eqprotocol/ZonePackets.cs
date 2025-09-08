@@ -5864,16 +5864,12 @@ namespace OpenEQ.Netcode {
 	}
 
 	public struct ClientZoneEntry : IEQStruct {
-		uint unknown0000;  // Usually 0
+		uint unk;
 		public string CharName;
-		uint unknown0068;  // Zone-specific data
-		uint unknown0072;  // Additional flags
 
 		public ClientZoneEntry(string CharName) : this() {
 			this.CharName = CharName;
-			this.unknown0000 = 0;
-			this.unknown0068 = 0;
-			this.unknown0072 = 0;
+			this.unk = 0;
 		}
 
 		public ClientZoneEntry(byte[] data, int offset = 0) : this() {
@@ -5890,10 +5886,8 @@ namespace OpenEQ.Netcode {
 			}
 		}
 		public void Unpack(BinaryReader br) {
-			unknown0000 = br.ReadUInt32();
+			unk = br.ReadUInt32();
 			CharName = br.ReadString(64);
-			unknown0068 = br.ReadUInt32();
-			unknown0072 = br.ReadUInt32();
 		}
 
 		public byte[] Pack() {
@@ -5905,10 +5899,8 @@ namespace OpenEQ.Netcode {
 			}
 		}
 		public void Pack(BinaryWriter bw) {
-			bw.Write(unknown0000);
+			bw.Write(unk);
 			bw.Write(CharName.ToBytes(64));
-			bw.Write(unknown0068);
-			bw.Write(unknown0072);
 		}
 
 		public override string ToString() {
@@ -7152,10 +7144,14 @@ namespace OpenEQ.Netcode {
 			}
 			ret += "\tBinds = ";
 			try {
-				ret += "{\n";
-				for(int i = 0, e = Binds.Length; i < e; ++i)
-					ret += $"\t\t{ Indentify(Binds[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
-				ret += "\t},\n";
+				if (Binds != null) {
+					ret += "{\n";
+					for(int i = 0, e = Binds.Length; i < e; ++i)
+						ret += $"\t\t{ Indentify(Binds[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
+					ret += "\t},\n";
+				} else {
+					ret += "!!NULL!!\n";
+				}
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
@@ -7479,10 +7475,14 @@ namespace OpenEQ.Netcode {
 			}
 			ret += "\tGroupMembers = ";
 			try {
-				ret += "{\n";
-				for(int i = 0, e = GroupMembers.Length; i < e; ++i)
-					ret += $"\t\t{ Indentify(GroupMembers[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
-				ret += "\t},\n";
+				if (GroupMembers != null) {
+					ret += "{\n";
+					for(int i = 0, e = GroupMembers.Length; i < e; ++i)
+						ret += $"\t\t{ Indentify(GroupMembers[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
+					ret += "\t},\n";
+				} else {
+					ret += "!!NULL!!\n";
+				}
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
@@ -7795,19 +7795,27 @@ namespace OpenEQ.Netcode {
 			var ret = "struct SaveOnZoneReq {\n";
 			ret += "\tPart1 = ";
 			try {
-				ret += "{\n";
-				for(int i = 0, e = Part1.Length; i < e; ++i)
-					ret += $"\t\t{ Indentify(Part1[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
-				ret += "\t},\n";
+				if (Part1 != null) {
+					ret += "{\n";
+					for(int i = 0, e = Part1.Length; i < e; ++i)
+						ret += $"\t\t{ Indentify(Part1[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
+					ret += "\t},\n";
+				} else {
+					ret += "!!NULL!!\n";
+				}
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
 			ret += "\tPart2 = ";
 			try {
-				ret += "{\n";
-				for(int i = 0, e = Part2.Length; i < e; ++i)
-					ret += $"\t\t{ Indentify(Part2[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
-				ret += "\t}\n";
+				if (Part2 != null) {
+					ret += "{\n";
+					for(int i = 0, e = Part2.Length; i < e; ++i)
+						ret += $"\t\t{ Indentify(Part2[i], 2) }" + (i != e - 1 ? "," : "") + "\n";
+					ret += "\t}\n";
+				} else {
+					ret += "!!NULL!!\n";
+				}
 			} catch(NullReferenceException) {
 				ret += "!!NULL!!\n";
 			}
@@ -8003,5 +8011,58 @@ namespace OpenEQ.Netcode {
 			}
 			return ret + "}";
 		}
+	}
+
+	public struct SpawnAppearance : IEQStruct {
+		public uint SpawnId;
+		public ushort Type;
+		public uint Parameter;
+
+		public SpawnAppearance(BinaryReader br) {
+			SpawnId = br.ReadUInt32();
+			Type = br.ReadUInt16();
+			Parameter = br.ReadUInt32();
+		}
+
+		public void Unpack(byte[] raw) {
+			using (var br = new BinaryReader(new MemoryStream(raw))) {
+				Unpack(br);
+			}
+		}
+
+		public void Unpack(byte[] raw, int offset) {
+			using (var br = new BinaryReader(new MemoryStream(raw, offset, raw.Length - offset))) {
+				Unpack(br);
+			}
+		}
+
+		public void Unpack(BinaryReader br) {
+			SpawnId = br.ReadUInt32();
+			Type = br.ReadUInt16();
+			
+			// Some SpawnAppearance packets are 8 bytes (missing Parameter), handle gracefully
+			try {
+				Parameter = br.ReadUInt32();
+			} catch (System.IO.EndOfStreamException) {
+				Parameter = 0;  // Default to 0 if Parameter is missing
+			}
+		}
+
+		public byte[] Pack() {
+			using (var ms = new MemoryStream()) {
+				using (var bw = new BinaryWriter(ms)) {
+					Pack(bw);
+					return ms.ToArray();
+				}
+			}
+		}
+
+		public void Pack(BinaryWriter bw) {
+			bw.Write(SpawnId);
+			bw.Write(Type);
+			bw.Write(Parameter);
+		}
+
+		public override string ToString() => $"SpawnAppearance {{ SpawnId={SpawnId}, Type={Type}, Parameter={Parameter} }}";
 	}
 }

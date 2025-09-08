@@ -5,10 +5,14 @@ using System.IO;
 using System.Windows.Forms;
 using NLua;
 using OpenEQ.Netcode;
+using OpenEQ.Netcode.GameClient;
+using OpenEQ.Netcode.GameClient.Models;
 using System.Drawing;
 using NLog;
 using MySqlConnector;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace eqmap
 {
@@ -25,9 +29,7 @@ namespace eqmap
         private Lua lua;
         private Chat chat;
         private Zone zone;
-        private LoginStream loginStream;
-        private WorldStream worldStream;
-        private ZoneStream zoneStream;
+        private EQGameClient gameClient;
         private PlayerProfile player;
         private Map map = new Map();
         private Dictionary<string, string> zones = new Dictionary<string, string>();
@@ -75,7 +77,7 @@ namespace eqmap
             var logfile = new NLog.Targets.FileTarget("logfile") { FileName = @"logs\log.txt" };
 
             // Rules for mapping loggers to targets            
-            config.AddRule(LogLevel.Debug, LogLevel.Fatal, logfile);
+            config.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, logfile);
 
             // Apply config           
             NLog.LogManager.Configuration = config;
@@ -87,69 +89,132 @@ namespace eqmap
         #region Draw Map
         private void loadMap()
         {
-            map.zone = zones[Convert.ToString(player.ZoneID)];
-            map.zoom = 1f;
-            map.maxX = 0;
-            map.maxY = 0;
-            map.minX = 0;
-            map.minY = 0;
-            map.lines = new List<Line>();
-            
-            FileInfo[] maps = new DirectoryInfo("maps").GetFiles($"{map.zone}.txt", SearchOption.AllDirectories);
-
-            foreach (string line in File.ReadAllLines(maps[0].FullName))
+            try
             {
-                if (line.StartsWith("L"))
-                {                   
-                    Line l = new Line(line);
-                    map.lines.Add(l);
-                    map.maxX = l.fromX > l.toX ? (map.maxX < l.fromX ? l.fromX : map.maxX) : (map.maxX < l.toX ? l.toX : map.maxX);
-                    map.maxY = l.fromY > l.toY ? (map.maxY < l.fromY ? l.fromY : map.maxY) : (map.maxY < l.toY ? l.toY : map.maxY);
-                    map.minX = l.fromX < l.toX ? (map.minX > l.fromX ? l.fromX : map.minX) : (map.minX > l.toX ? l.toX : map.minX);
-                    map.minY = l.fromY < l.toY ? (map.minY > l.fromY ? l.fromY : map.minY) : (map.minY > l.toY ? l.toY : map.minY);
+                string zoneIdStr = Convert.ToString(player.ZoneID);
+                if (!zones.ContainsKey(zoneIdStr))
+                {
+                    Info($"Zone ID {zoneIdStr} not found in zones dictionary");
+                    return;
                 }
-            }           
-            MapReady = true;            
+                
+                map.zone = zones[zoneIdStr];
+                Info($"Loading map for zone: {map.zone} (ID: {zoneIdStr})");
+                
+                map.zoom = 1f;
+                map.maxX = 0;
+                map.maxY = 0;
+                map.minX = 0;
+                map.minY = 0;
+                map.lines = new List<Line>();
+                
+                if (!Directory.Exists("maps"))
+                {
+                    Info("Maps directory not found");
+                    return;
+                }
+                
+                FileInfo[] maps = new DirectoryInfo("maps").GetFiles($"{map.zone}.txt", SearchOption.AllDirectories);
+                
+                if (maps.Length == 0)
+                {
+                    Info($"No map file found for zone: {map.zone}.txt");
+                    return;
+                }
+
+                Info($"Loading map file: {maps[0].FullName}");
+                int lineCount = 0;
+                
+                foreach (string line in File.ReadAllLines(maps[0].FullName))
+                {
+                    if (line.StartsWith("L"))
+                    {                   
+                        Line l = new Line(line);
+                        map.lines.Add(l);
+                        lineCount++;
+                        map.maxX = l.fromX > l.toX ? (map.maxX < l.fromX ? l.fromX : map.maxX) : (map.maxX < l.toX ? l.toX : map.maxX);
+                        map.maxY = l.fromY > l.toY ? (map.maxY < l.fromY ? l.fromY : map.maxY) : (map.maxY < l.toY ? l.toY : map.maxY);
+                        map.minX = l.fromX < l.toX ? (map.minX > l.fromX ? l.fromX : map.minX) : (map.minX > l.toX ? l.toX : map.minX);
+                        map.minY = l.fromY < l.toY ? (map.minY > l.fromY ? l.fromY : map.minY) : (map.minY > l.toY ? l.toY : map.minY);
+                    }
+                }
+                
+                Info($"Map loaded with {lineCount} lines. Bounds: X({map.minX},{map.maxX}) Y({map.minY},{map.maxY})");
+                MapReady = true;            
+            }
+            catch (Exception ex)
+            {
+                Error($"Error loading map: {ex.Message}");
+                MapReady = false;
+            }
         }
         private void PictureBox1_Paint(object sender, PaintEventArgs e)
         {
-            if (mapReady)
+            Graphics g = e.Graphics;
+            g.Clear(Color.LightGray); // Changed to light gray so we can see if it's painting
+            
+            // Always draw status info
+            int y = 10;
+            g.DrawString($"MapReady: {mapReady}", SystemFonts.DefaultFont, Brushes.Black, 10, y);
+            y += 20;
+            
+            if (map != null)
             {
-                Graphics g = e.Graphics;                
-                g.Clear(Color.White);
-                foreach (Line line in map.lines)
+                g.DrawString($"Zone: {map.zone ?? "null"}", SystemFonts.DefaultFont, Brushes.Black, 10, y);
+                y += 20;
+                g.DrawString($"Lines: {map.lines?.Count ?? 0}", SystemFonts.DefaultFont, Brushes.Black, 10, y);
+                y += 20;
+            }
+            
+            g.DrawString($"Spawns: {spawns?.Count ?? 0}", SystemFonts.DefaultFont, Brushes.Black, 10, y);
+            y += 20;
+            
+            if (!mapReady)
+            {
+                g.DrawString("Map not ready", SystemFonts.DefaultFont, Brushes.Red, 10, y);
+                return;
+            }
+            
+            if (map.lines == null || map.lines.Count == 0)
+            {
+                g.DrawString("No map lines loaded", SystemFonts.DefaultFont, Brushes.Red, 10, y);
+                return;
+            }
+            
+            // Draw the map
+            foreach (Line line in map.lines)
+            {
+                g.DrawLine(
+                    line.pen,
+                    new Point(map.adjustedX(line.fromX), map.adjustedY(line.fromY)),
+                    new Point(map.adjustedX(line.toX), map.adjustedY(line.toY))
+                );                        
+            }
+            
+            using (Font font = new Font("Arial", 10, FontStyle.Regular, GraphicsUnit.Pixel))
+            {                    
+                TextRenderer.DrawText(g, "(0,0)", font, new Point(map.adjustedX(0), map.adjustedY(0)), Color.Black);
+            
+                foreach(Spawn spawn in spawns.Values)
                 {
-                    g.DrawLine(
-                        line.pen,
-                        new Point(map.adjustedX(line.fromX), map.adjustedY(line.fromY)),
-                        new Point(map.adjustedX(line.toX), map.adjustedY(line.toY))
+                    TextRenderer.DrawText(
+                        g, $"{spawn.Name}", 
+                        font, 
+                        new Point(map.adjustedX(-spawn.Position.X / 8) + 6, map.adjustedY(-spawn.Position.Y / 8)), 
+                        spawn.CharType == CharType.PC ? Color.Blue : Color.Red
+                    );
+
+                    g.DrawEllipse(
+                        new Pen(spawn.CharType == CharType.PC ? Color.Blue : Color.Red,5),
+                        map.adjustedX(-spawn.Position.X / 8),
+                        map.adjustedY(-spawn.Position.Y / 8),
+                        5,
+                        5
                     );                        
                 }
-                using (Font font = new Font("Arial", 10, FontStyle.Regular, GraphicsUnit.Pixel))
-                {                    
-                    TextRenderer.DrawText(g, "(0,0)", font, new Point(map.adjustedX(0), map.adjustedY(0)), Color.Black);
-                
-                    foreach(Spawn spawn in spawns.Values)
-                    {
-                        TextRenderer.DrawText(
-                            g, $"{spawn.Name}", 
-                            font, 
-                            new Point(map.adjustedX(-spawn.Position.X / 8) + 6, map.adjustedY(-spawn.Position.Y / 8)), 
-                            spawn.CharType == CharType.PC ? Color.Blue : Color.Red
-                        );
-
-                        g.DrawEllipse(
-                            new Pen(spawn.CharType == CharType.PC ? Color.Blue : Color.Red,5),
-                            map.adjustedX(-spawn.Position.X / 8),
-                            map.adjustedY(-spawn.Position.Y / 8),
-                            5,
-                            5
-                        );                        
-                    }
-                }
-                pictureBox1.Height = Convert.ToInt32((map.maxY + (map.minY > 0 ? map.minY : -map.minY) + 1) * map.zoom);
-                pictureBox1.Width = Convert.ToInt32((map.maxX + (map.minX > 0 ? map.minX : -map.minX) + 1) * map.zoom);
-            }            
+            }
+            pictureBox1.Height = Convert.ToInt32((map.maxY + (map.minY > 0 ? map.minY : -map.minY) + 1) * map.zoom);
+            pictureBox1.Width = Convert.ToInt32((map.maxX + (map.minX > 0 ? map.minX : -map.minX) + 1) * map.zoom);
         }
 
         private void PictureBox1_MouseMove(object sender, MouseEventArgs e)
@@ -192,179 +257,240 @@ namespace eqmap
         #endregion
 
         #region Account Logon
-        private void Account_OnLogon()
+        private async void Account_OnLogon()
         {
             Info($"Logon: {account.User} {account.Server} {account.Character}");
 
-            loginStream = new LoginStream(account.LoginServer, account.LoginServerPort);
-            loginStream.LoginSuccess += (_, success) =>
+            // Create a simple logger adapter that wraps NLog
+            var gameClientLogger = new NLogLoggerAdapter();
+            
+            // Create and configure the game client with proper logger
+            gameClient = new EQGameClient(gameClientLogger);
+            
+            // Subscribe to events
+            gameClient.ConnectionStateChanged += OnConnectionStateChanged;
+            gameClient.Disconnected += OnGameClientDisconnected;
+            gameClient.ChatMessageReceived += OnChatMessageReceived;
+            gameClient.PlayerSpawned += OnPlayerSpawned;
+            gameClient.NPCSpawned += OnNPCSpawned;
+            gameClient.PlayerDespawned += OnPlayerDespawned;
+            gameClient.NPCDespawned += OnNPCDespawned;
+            gameClient.ZoneChanged += OnZoneChanged;
+            gameClient.LoginFailed += OnLoginFailed;
+            gameClient.PositionUpdated += OnPositionUpdated;
+
+            try
             {
-                if (success)
+                // Set the login server info BEFORE connecting
+                gameClient.LoginServer = account.LoginServer;
+                gameClient.LoginServerPort = account.LoginServerPort;
+                
+                // Connect to the server using LoginAsync
+                bool connected = await gameClient.LoginAsync(
+                    account.User,
+                    account.Password,
+                    account.Server,
+                    account.Character
+                );
+
+                if (connected)
                 {
-                    Info($"Login succeeded (accountID={loginStream.AccountID}). Requesting server list");
-                    loginStream.RequestServerList();
+                    Info("Successfully connected to game server");
+                    CallLogonResult(true, "Connected");
+                    
+                    // Update player info
+                    UpdateCharacterFromGameClient();
                 }
                 else
                 {
-                    Error("Login failed");
-                    CallLogonResult(false, "Login failed");
-                    loginStream.Disconnect();
+                    Error("Failed to connect to game server");
+                    CallLogonResult(false, "Connection failed");
                 }
-            };
-
-            loginStream.ServerList += (_, servers) =>
+            }
+            catch (Exception ex)
             {
-                foreach (ServerListElement serv in servers)
-                {
-                    string shortName = serv.Longname.Substring(serv.Longname.LastIndexOf("] ") + 1).Trim();
-                    if (shortName == account.Server)
-                    {
-                        loginStream.Play(serv);
-                        return;
-                    }
-
-                }
-                Error("Server not found");
-                CallLogonResult(false, "Server not found");
-                loginStream.Disconnect();
-            };
-
-            loginStream.PlaySuccess += (_, server) =>
-            {
-                if (server == null)
-                {
-                    Error("Failed to connect to server");
-                    CallLogonResult(false, "Failed to connect to server");
-                    loginStream.Disconnect();
-                    return;
-                }
-                ConnectWorld(loginStream, server.Value);
-            };
-
-            loginStream.Login(account.User, account.Password);
+                Error($"Connection error: {ex.Message}");
+                CallLogonResult(false, ex.Message);
+            }
         }
         #endregion
 
-        #region Connect To World
-        void ConnectWorld(LoginStream ls, ServerListElement server)
+        #region EQGameClient Event Handlers
+        private void OnConnectionStateChanged(object sender, ConnectionState state)
         {
-            Info($"Selected {server}.  Connecting");
-            worldStream = new WorldStream(server.WorldIP, 9000, ls.AccountID, ls.SessionKey);
-
-            string charName = null;
-            worldStream.CharacterList += (_, chars) =>
+            Info($"Connection state changed to: {state}");
+            
+            if (state == ConnectionState.InGame)
             {
-                foreach (CharacterSelectEntry @char in chars)
-                {
-                    if (@char.Name == account.Character)
-                    {
-                        worldStream.SendEnterWorld(new EnterWorld(charName = @char.Name, false, false));
-                        return;
-                    }
-                }
-                Error("Character not found");
-                CallLogonResult(false, "Character not found");
-                ls.Disconnect();
-            };
-
-            worldStream.ZoneServer += (_, zs) =>
-            {
-                Info($"Got zone server at {zs.Host}:{zs.Port}.  Connecting");
-                ConnectZone(charName, zs.Host, zs.Port);
-            };
-
-            worldStream.MOTD += (_, motd) =>
-            {
-                Info($"Message of the day : {motd.Replace("\0", "")}");
-            };
-
-            worldStream.ChatServerList += (_, chats) =>
-            {
-                Info($"ChatServerList : {chats.Replace("\0", "")}");
-            };
-        }
-        #endregion
-
-        #region Connect Zone
-        void ConnectZone(string charName, string host, ushort port)
-        {
-            string _charName = charName;
-            string _host = host;
-            ushort _port = port;
-
-            Info("Connected");
-            spawns.Clear();            
-            zoneStream = new ZoneStream(host, port, charName);            
-            chat = new Chat(account, zoneStream);
-            zone = new Zone(zoneStream);
-            lua["chat"] = chat;
-            lua["zone"] = zone;            
-
-            CallLogonResult(true, "Connected");
-            zoneStream.Spawned += (_, mob) =>
-            {
-                Info($"Spawn {mob.Name} X:{mob.Position.X} Y:{mob.Position.Y}");               
+                spawns.Clear();
                 
-                if (mob.CharType == CharType.NPC || mob.CharType == CharType.PC)
-                {
-                    spawns.TryAdd(mob.SpawnID, mob);
-                    pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });                    
-                }
-                CallSpawnEvent(mob);
-            };
-            zoneStream.PositionUpdated += (_, update) =>
-            {   
-                if (!spawns.ContainsKey(update.ID))
-                {
-                    Info($"Position updated : {update.ID} not found"); 
-                    return;
-                }
-                Spawn tmpSpawn = spawns[update.ID];
-                tmpSpawn.Position.X = update.Position.X;
-                tmpSpawn.Position.Y = update.Position.Y;
-                tmpSpawn.Position.Z = update.Position.Z;
-                tmpSpawn.Position.Heading = update.Position.Heading;
-                tmpSpawn.Position.DeltaX = update.Position.DeltaX;
-                tmpSpawn.Position.DeltaY = update.Position.DeltaY;
-                tmpSpawn.Position.DeltaZ = update.Position.DeltaZ;
-                tmpSpawn.Position.DeltaHeading = update.Position.DeltaHeading;
-                tmpSpawn.Position.Animation = update.Position.Animation;
-                spawns[update.ID] = tmpSpawn;
-                Info($"Position updated : {tmpSpawn.Name} ({update.ID})");
-                pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
-            };
-            zoneStream.Death += (_, death) =>
-            {
-                if (!spawns.ContainsKey(death.SpawnId))
-                {
-                    Info($"Death : {death.SpawnId} not found");
-                    return;
-                }
-                Info($"Death {spawns[death.SpawnId].Name}");
-                Spawn sp;
-                spawns.TryRemove(death.SpawnId, out sp);
-                pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
-            };
-            zoneStream.PlayerProfile += (_, player) =>
-            {
-                UpdateCharacter(player);               
-                MapReady = false;
-                loadMap();
-                buttonZone.BeginInvoke((Action)delegate { buttonZone.Enabled = true; });                
-                pictureBox1.BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
-            };
-            zoneStream.Message += (_, message) =>
-            {
-                CallMessageEvent(message);
-            };
-            zoneStream.Zoned += (_, zone) =>
-            {
-                zoneStream.Disconnect();
-                ConnectZone(_charName, _host, _port);
-            };
+                // Update chat and zone with game client
+                chat = new Chat(account, gameClient);
+                zone = new Zone(gameClient);
+                
+                // Force initial refresh to show status
+                BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
+                lua["chat"] = chat;
+                lua["zone"] = zone;
+                
+                // Enable UI elements
+                BeginInvoke((Action)delegate { buttonZone.Enabled = true; });
+            }
         }
 
-       
+        private void OnGameClientDisconnected(object sender, EventArgs e)
+        {
+            Info("Game client disconnected");
+            BeginInvoke((Action)delegate { buttonZone.Enabled = false; });
+        }
+
+        private void OnLoginFailed(object sender, string error)
+        {
+            Error($"Login failed: {error}");
+            CallLogonResult(false, error);
+        }
+
+        private void OnChatMessageReceived(object sender, ChatMessage message)
+        {
+            Info($"[{message.Channel}] {message.From}: {message.Message}");
+            // Convert to old ChannelMessage format for Lua compatibility
+            var oldMessage = new ChannelMessage
+            {
+                ChanNum = (uint)message.Channel,
+                From = message.From,
+                Message = message.Message
+            };
+            CallMessageEvent(oldMessage);
+        }
+
+        private void OnPlayerSpawned(object sender, Player player)
+        {
+            Info($"Player spawned: {player.Name} at X:{player.X} Y:{player.Y}");
+            
+            // Convert Player to Spawn for compatibility
+            var spawn = new Spawn
+            {
+                SpawnID = player.SpawnID,
+                Name = player.Name,
+                CharType = CharType.PC,
+                Position = new SpawnPosition
+                {
+                    X = (int)player.X,
+                    Y = (int)player.Y,
+                    Z = (int)player.Z,
+                    Heading = (ushort)player.Heading
+                }
+            };
+            
+            spawns.TryAdd(player.SpawnID, spawn);
+            Info($"Added player spawn to map. Total spawns: {spawns.Count}");
+            BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
+            CallSpawnEvent(spawn);
+        }
+
+        private void OnNPCSpawned(object sender, NPC npc)
+        {
+            Info($"NPC spawned: {npc.Name} at X:{npc.X} Y:{npc.Y}");
+            
+            // Convert NPC to Spawn for compatibility
+            var spawn = new Spawn
+            {
+                SpawnID = npc.SpawnID,
+                Name = npc.Name,
+                CharType = CharType.NPC,
+                Position = new SpawnPosition
+                {
+                    X = (int)npc.X,
+                    Y = (int)npc.Y,
+                    Z = (int)npc.Z,
+                    Heading = (ushort)npc.Heading
+                }
+            };
+            
+            spawns.TryAdd(npc.SpawnID, spawn);
+            Info($"Added NPC spawn to map. Total spawns: {spawns.Count}");
+            BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
+            CallSpawnEvent(spawn);
+        }
+
+        private void OnPlayerDespawned(object sender, uint spawnId)
+        {
+            Info($"Player despawned: {spawnId}");
+            Spawn sp;
+            spawns.TryRemove(spawnId, out sp);
+            BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
+        }
+
+        private void OnNPCDespawned(object sender, uint spawnId)
+        {
+            Info($"NPC despawned: {spawnId}");
+            Spawn sp;
+            spawns.TryRemove(spawnId, out sp);
+            BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
+        }
+
+        private void OnPositionUpdated(object sender, PlayerPositionUpdate update)
+        {
+            // Update the position of the spawn if it exists
+            if (spawns.TryGetValue(update.ID, out Spawn spawn))
+            {
+                // Since Spawn is a struct, we need to update the position and put it back
+                spawn.Position = new SpawnPosition
+                {
+                    X = (int)update.Position.X,
+                    Y = (int)update.Position.Y,
+                    Z = (int)update.Position.Z,
+                    Heading = (ushort)update.Position.Heading
+                };
+                
+                // Put the updated spawn back in the dictionary
+                spawns[update.ID] = spawn;
+                
+                Info($"Position updated for spawn {update.ID}: ({spawn.Position.X:F1}, {spawn.Position.Y:F1})");
+                
+                // Refresh the map to show the new position
+                BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
+            }
+            else
+            {
+                // Log if we're getting updates for unknown spawns
+                Info($"Position update for unknown spawn ID {update.ID}");
+            }
+        }
+
+        private void OnZoneChanged(object sender, OpenEQ.Netcode.GameClient.Models.Zone zone)
+        {
+            Info($"Zone changed to: {zone.Name} ({zone.ZoneID})");
+            spawns.Clear();
+            MapReady = false;
+            
+            // Update player from game client
+            UpdateCharacterFromGameClient();
+            loadMap();
+            
+            BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
+        }
+
+        private void UpdateCharacterFromGameClient()
+        {
+            if (gameClient?.CurrentZone != null)
+            {
+                // For now, we'll create a basic player profile from zone info
+                // The actual player data would need to come from tracking our own spawn
+                player = new PlayerProfile
+                {
+                    Name = account.Character,
+                    Level = 1, // Default, should be tracked from spawn info
+                    Class = 1, // Default
+                    Race = 1, // Default
+                    ZoneID = (ushort)gameClient.CurrentZone.ZoneID,
+                    X = 0,
+                    Y = 0,
+                    Z = 0
+                };
+                UpdateCharacter(player);
+            }
+        }
         #endregion
 
         private void InitialiseSettings()
@@ -434,8 +560,11 @@ namespace eqmap
         {
             try
             {
-                if (loginStream != null)
-                    loginStream.Disconnect();
+                if (gameClient != null)
+                {
+                    gameClient.Disconnect();
+                    gameClient.Dispose();
+                }
             }
             catch (Exception)
             {
@@ -446,8 +575,12 @@ namespace eqmap
         #region Zone
         private void Button1_Click(object sender, EventArgs e)
         {            
-            var zone = listboxZone.SelectedItem.ToString();            
-            zoneStream.SendChatMessage(string.Empty, string.Empty, $"#zone {zone}");
+            var zone = listboxZone.SelectedItem?.ToString();
+            if (!string.IsNullOrEmpty(zone) && gameClient != null)
+            {
+                // Send zone command through chat
+                gameClient.SendChat($"#zone {zone}", ChatChannel.Say);
+            }
         }
         #endregion
 

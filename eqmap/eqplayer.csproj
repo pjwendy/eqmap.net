@@ -184,6 +184,7 @@
   <ItemGroup>
     <Compile Include="Account.cs" />
     <Compile Include="Chat.cs" />
+    <Compile Include="NLogLoggerAdapter.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -237,7 +238,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\eqprotocol\eqprotocol.csproj">
+    <ProjectReference Include="..\EQProtocol\EQProtocol.csproj">
       <Project>{50f94f1b-d71d-46be-9600-45a91c4bc710}</Project>
       <Name>eqprotocol</Name>
     </ProjectReference>

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet add package:*)",
+      "Bash(nuget restore:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet build:*)",
+      "Read(//c/Users/stecoc/git/OpenEQ/NetClient/bin/Debug/netcoreapp3.0/**)",
+      "Bash(del log.txt)",
+      "Bash(timeout:*)",
+      "Bash(./eqmap.exe)",
+      "Read(//c/Users/stecoc/git/OpenEQ/NetClient/**)",
+      "Read(//c/Users/stecoc/git/OpenEQ/**)",
+      "WebSearch",
+      "Read(//c/Users/stecoc/git/Server/**)",
+      "Read(//c/Users/stecoc/git/**)",
+      "Bash(find:*)",
+      "Bash(sed:*)",
+      "Bash(EQBot.exe)",
+      "Bash(./EQBot.exe)",
+      "Bash(dir maps)",
+      "Bash(msbuild:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -5,8 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using EQBot.GameClient;
-using EQBot.GameClient.Models;
+using OpenEQ.Netcode.GameClient;
+using OpenEQ.Netcode.GameClient.Models;
 
 namespace EQBot
 {

@@ -21,21 +21,29 @@ namespace NetClient {
             if (File.Exists("log.txt"))
                 File.Delete("log.txt");
 
-            // Create config for NLog so we can log to file as well as to file
+            // Create config for NLog so we can log to file as well as to console
             var config = new NLog.Config.LoggingConfiguration();
 
             // Targets where to log to: File and Console
-            var logfile = new NLog.Targets.FileTarget("logfile") { FileName = "log.txt" };
+            var logfile = new NLog.Targets.FileTarget("logfile") { 
+                FileName = "log.txt",
+                Layout = "${longdate} ${level:uppercase=true} ${logger} ${message} ${exception:format=tostring}"
+            };
+            
+            var logconsole = new NLog.Targets.ConsoleTarget("logconsole") {
+                Layout = "${time} [${level:uppercase=true}] ${logger:shortName=true} ${message} ${exception:format=tostring}"
+            };
 
-            // Rules for mapping loggers to targets            
+            // Rules for mapping loggers to targets - log to both file and console          
             config.AddRule(LogLevel.Debug, LogLevel.Fatal, logfile);
+            config.AddRule(LogLevel.Debug, LogLevel.Fatal, logconsole);
 
             // Apply config           
             NLog.LogManager.Configuration = config;
 
             Logger.Info("Starting eqconsole");
 
-            var host = GetIndexValueOrDefault(args, 0, "127.0.0.1", (string value) => value);
+            var host = GetIndexValueOrDefault(args, 0, "172.29.179.249", (string value) => value);
             var port = GetIndexValueOrDefault(args, 1, 5999,        (string value) => int.Parse(value));
             Logger.Info($"Connecting to LoginServer @ {host}:{port}");
 
@@ -96,13 +104,25 @@ namespace NetClient {
 			worldStream.CharacterList += (_, chars) => {
                 Logger.Info("Select a character:");
                 Logger.Info("0: Create a new character");
-				chars.ForEach((@char, i) => WriteLine($"{i + 1}: {@char.Name} - Level {@char.Level}"));
-				int ret;
-				while(!int.TryParse(Input("Character number"), out ret) || ret < 0 || chars.Count < ret) {}
-				if(ret == 0)
-					CreateCharacter();
-				else
-					worldStream.SendEnterWorld(new EnterWorld(charName = chars[ret - 1].Name, false, false));
+				chars.ForEach((@char, i) => Logger.Info($"{i + 1}: {@char.Name} - Level {@char.Level}"));
+				
+				// Automatically select the first character if available, otherwise prompt
+				if (chars.Count > 0) {
+					// Auto-select first character
+					charName = chars[0].Name;
+					Logger.Info($"Auto-selecting character: {charName}");
+					Logger.Info($"Calling SendEnterWorld with character: {charName}");
+					worldStream.SendEnterWorld(new EnterWorld(charName, false, false));
+					Logger.Info($"SendEnterWorld called successfully");
+				} else {
+					// No characters, prompt to create
+					int ret;
+					while(!int.TryParse(Input("Character number"), out ret) || ret < 0 || chars.Count < ret) {}
+					if(ret == 0)
+						CreateCharacter();
+					else
+						worldStream.SendEnterWorld(new EnterWorld(charName = chars[ret - 1].Name, false, false));
+				}
 			};
 
 			void CreateCharacter() {
