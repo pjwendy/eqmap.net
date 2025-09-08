@@ -2,7 +2,34 @@
 
 ## Core Dependencies
 
-Our bot ecosystem depends on several key repositories that provide the EverQuest server infrastructure. We maintain forked versions to ensure stability and protect against breaking changes.
+Our bot ecosystem depends on several key repositories that provide the EverQuest server infrastructure and client implementation references. We maintain forked versions to ensure stability and protect against breaking changes.
+
+---
+
+## Client Implementation References
+
+### OpenEQ - Original Open Source EverQuest Client
+**URL**: https://github.com/daeken/OpenEQ  
+**Author**: Serafina Brocious (@daeken)  
+**Purpose**: Open source EverQuest client implementation in C#  
+**Role in Project**: **This is the original project that our current implementation was based on**
+
+**Key Components**:
+- `NetClient/` - Network client implementation
+- `Netcode/` - Core networking protocol (foundation for our eqprotocol)
+- `Engine/` - Game engine components
+- `CollisionManager/` - Collision detection system
+
+**Technologies**:
+- Primary Language: C# (94.1%)
+- Secondary Language: Python (5.9%)
+- Solution File: OpenEQ.sln
+
+**Historical Significance**:
+- Original source for our EverQuest protocol implementation
+- Reference for packet structures and client behavior
+- Foundation for understanding EQ networking in C#
+- Many of our core protocol classes evolved from this codebase
 
 ---
 

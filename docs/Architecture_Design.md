@@ -91,12 +91,61 @@ Efficient resource usage to maximize bot density:
 ```csharp
 class BotInstance
 {
-    EQStreamClient networkClient;     // Server communication
+    LoginStream loginStream;           // Login server connection
+    WorldStream worldStream;           // World server connection  
+    ZoneStream zoneStream;            // Zone server connection
     BehaviorEngine behaviorEngine;    // Decision making
     GameState gameState;              // Current world state
     EventProcessor eventProcessor;    // Handle game events
     HealthMonitor healthMonitor;      // Self-monitoring
 }
+```
+
+**Protocol Flow Implementation**:
+
+#### 1. Login Server Connection
+```csharp
+// Successful implementation using SESSION protocol
+LoginStream -> SESSION_Request
+           <- SESSION_Response
+           -> SessionReady + Login(username, password)
+           <- LoginAccepted
+           -> ServerListRequest
+           <- ServerListResponse
+           -> PlayEverquestRequest(serverId)
+           <- PlayEverquestResponse(serverInfo)
+```
+
+#### 2. World Server Connection
+```csharp
+// Complete authentication chain
+WorldStream -> SESSION_Request
+           <- SESSION_Response  
+           -> SendLoginInfo(accountId + sessionKey)
+           <- ApproveWorld (544 bytes, fragmented)
+           <- EnterWorld + PostEnterWorld
+           -> ApproveWorld (empty)      // Critical response
+           -> WorldClientReady          // Critical response
+           <- SendCharInfo
+           -> EnterWorld(characterName)
+           <- ZoneServerInfo
+```
+
+#### 3. Zone Server Connection
+```csharp
+// Full initialization sequence
+ZoneStream -> SESSION_Request
+          <- SESSION_Response
+          -> ZoneEntry(characterName)   // 68 bytes
+          <- Multiple spawn packets
+          <- PlayerProfile (26KB+, fragmented)
+          <- Weather
+          -> ReqNewZone
+          <- NewZone (944 bytes)        // Zone initialization
+          -> ReqClientSpawn
+          <- SendExpZonein
+          -> ClientReady
+          // Character appears in UI!
 ```
 
 ### Behavior Engine (AI/Scripting)
@@ -239,6 +288,64 @@ services:
 - **Service Uptime**: 99.9% (redundant management services)
 - **Data Integrity**: Zero loss of bot configurations
 - **Recovery Time**: <30 seconds for bot restart
+
+## Critical Protocol Implementation Details
+
+### Fragment Handling (EQStream.cs)
+The fragment handling must match the server's expectations exactly:
+
+```csharp
+case SessionOp.Fragment:
+    var tlen = packet.Data.NetU32(0);  // Total length in first fragment
+    var rlen = -4;
+    // Check if we have all fragments
+    for(var i = packet.Sequence; futurePackets[i] != null && rlen < tlen; ++i)
+        rlen += futurePackets[i].Data.Length;
+    
+    if(rlen < tlen) {
+        // Store fragment but DON'T increment InSequence
+        futurePackets[packet.Sequence] = packet;
+        return false;  // Wait for more fragments
+    }
+    // Reassemble when complete
+```
+
+**Critical**: Do NOT increment InSequence for incomplete fragments - this breaks reassembly!
+
+### World Authentication Sequence
+The PostEnterWorld handler MUST send these responses:
+
+```csharp
+case WorldOp.PostEnterWorld:
+    // These responses are MANDATORY for authentication
+    Send(AppPacket.Create(WorldOp.ApproveWorld));
+    Send(AppPacket.Create(WorldOp.WorldClientReady));
+    break;
+```
+
+### Packet Structure Specifications
+
+#### ClientZoneEntry (68 bytes)
+```csharp
+public struct ClientZoneEntry {
+    uint unk;           // 4 bytes - must be 0
+    char[64] CharName;  // 64 bytes - null-terminated string
+}
+```
+
+#### Key Packet Sizes
+- **LoginInfo**: 464 bytes (accountID + sessionKey)
+- **ApproveWorld**: 544 bytes (fragmented from server)
+- **EnterWorld Request**: 72 bytes (character name)
+- **NewZone**: 944 bytes (zone initialization data)
+- **PlayerProfile**: 26KB+ (heavily fragmented)
+
+### Session Management
+Each stream maintains independent sequence numbers:
+- `OutSequence`: Increments for each sent packet
+- `InSequence`: Increments ONLY for complete packets/fragments
+- `lastAckReceived`: Tracks acknowledgments from server
+- `lastAckSent`: Tracks our acknowledgments to server
 
 ## Security & Safety
 

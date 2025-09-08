@@ -208,6 +208,9 @@ namespace OpenEQ.Netcode {
         }
 
         public static string Indentify(object ino, int amt = 1) {
+            if (ino == null)
+                return "!!NULL!!";
+                
             var inp = ino.ToString();
             if(inp.Contains("\n")) {
                 var lines = inp.Split('\n');

@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\eqprotocol\eqprotocol.csproj" />
+    <ProjectReference Include="..\EQProtocol\EQProtocol.csproj" />
     <ProjectReference Include="..\zlib\zlib.csproj" />
   </ItemGroup>
 

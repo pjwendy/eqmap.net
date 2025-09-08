@@ -326,7 +326,8 @@ namespace EQBot
             Task.Run(async () =>
             {
                 await Task.Delay(2000);
-                _zoneStream?.SendChatMessage("", "", "Hello! I'm an EverQuest bot!");
+                // Temporarily disable chat message to prevent ACK timeout
+                // _zoneStream?.SendChatMessage("", "", "Hello! I'm an EverQuest bot!");
                 
                 // Add more bot behavior here
                 await RunBotBehaviorAsync();
@@ -345,7 +346,8 @@ namespace EQBot
                 await Task.Delay(30000);
                 if (_zoneStream != null && _isRunning)
                 {
-                    _zoneStream.SendChatMessage("", "", "Bot is still running...");
+                    // Temporarily disable recurring chat messages
+                    // _zoneStream.SendChatMessage("", "", "Bot is still running...");
                 }
                 
                 // Add more sophisticated bot logic here:

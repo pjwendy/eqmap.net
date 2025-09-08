@@ -302,7 +302,7 @@ struct PlayerProfile_Struct {
 | OP_ZoneEntry | 0x4b61 | Verified | Zone entry request |
 | OP_ReqNewZone | 0x4118 | Verified | Request new zone |
 | OP_NewZone | 0x43ac | Verified | New zone info |
-| OP_ZoneSpawns | 0x7114 | Verified | All spawns in zone |
+| OP_ZoneSpawns | 0x7114 | Verified | All spawns in zoOP_HPUpdatene |
 | OP_PlayerProfile | 0x6022 | Verified | Complete character data |
 | OP_TimeOfDay | 0x6015 | Verified | Game time |
 | OP_LevelUpdate | 0x6a99 | Verified | Level change |
