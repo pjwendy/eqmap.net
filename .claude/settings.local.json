@@ -19,7 +19,14 @@
       "Bash(EQBot.exe)",
       "Bash(./EQBot.exe)",
       "Bash(dir maps)",
-      "Bash(msbuild:*)"
+      "Bash(msbuild:*)",
+      "Bash(dir:*)",
+      "Bash(powershell:*)",
+      "Bash(dotnet add:*)",
+      "WebFetch(domain:www.nuget.org)",
+      "Bash(dotnet remove:*)",
+      "Bash(dotnet tool restore:*)",
+      "Bash(dotnet xmldocmd:*)"
     ],
     "deny": [],
     "ask": []

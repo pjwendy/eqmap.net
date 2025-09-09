@@ -4,16 +4,17 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="morelinq" Version="4.3.0" />
     <PackageReference Include="NLog" Version="5.3.4" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+    <PackageReference Include="ProDotNetZip" Version="1.20.0" />
+    <PackageReference Include="XmlDocMarkdown" Version="2.9.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\zlib\zlib.csproj" />
-  </ItemGroup>
 
 </Project>

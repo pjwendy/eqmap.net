@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>EQProtocol</name>
+    </assembly>
+    <members>
+        <member name="M:OpenEQ.Netcode.GameClient.EQGameClient.LoginAsync(System.String,System.String,System.String,System.String)">
+            <summary>
+            Complete login sequence - connects to login server, selects world, selects character
+            </summary>
+        </member>
+        <member name="M:OpenEQ.Netcode.GameClient.EQGameClient.SendChat(System.String,OpenEQ.Netcode.ChatChannel)">
+            <summary>
+            Send a chat message
+            </summary>
+        </member>
+        <member name="M:OpenEQ.Netcode.GameClient.EQGameClient.MoveTo(System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Move character to a specific location
+            </summary>
+        </member>
+        <member name="M:OpenEQ.Netcode.GameClient.EQGameClient.GetNearbyNPCs(System.Single)">
+            <summary>
+            Get all NPCs within a certain radius of the character
+            </summary>
+        </member>
+        <member name="M:OpenEQ.Netcode.GameClient.EQGameClient.Disconnect">
+            <summary>
+            Disconnect from the game
+            </summary>
+        </member>
+    </members>
+</doc>
