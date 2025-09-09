@@ -10,12 +10,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{19707158-D33D-4917-908D-FF8A96BCDE1E}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
-		scripts\bifar (honytree) - login.lua = scripts\bifar (honytree) - login.lua
-		scripts\bifar (local) - login.lua = scripts\bifar (local) - login.lua
-		scripts\bifar - bifar (docker) - login.lua = scripts\bifar - bifar (docker) - login.lua
-		scripts\eboola (local).lua = scripts\eboola (local).lua
-		scripts\steve (honytree) - login.lua = scripts\steve (honytree) - login.lua
-		scripts\steve (local) - login.lua = scripts\steve (local) - login.lua
+		scripts\bot.example = scripts\bot.example
+		scripts\generate-docs.ps1 = scripts\generate-docs.ps1
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{B9291FE1-CC2C-483F-AD0B-78636BB1FC7F}"
