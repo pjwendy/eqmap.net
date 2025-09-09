@@ -28,30 +28,220 @@ namespace OpenEQ.Netcode.GameClient
         private bool _disposed = false;
         
         // Game State
+        /// <summary>
+        /// Gets the current character information once logged in
+        /// </summary>
         public Character? Character { get; private set; }
+        
+        /// <summary>
+        /// Gets the current zone the character is in
+        /// </summary>
         public Zone? CurrentZone { get; private set; }
+        
+        /// <summary>
+        /// Gets the current connection state of the game client
+        /// </summary>
         public ConnectionState State { get; private set; } = ConnectionState.Disconnected;
         
         // Configuration
+        /// <summary>
+        /// Gets or sets the login server hostname or IP address
+        /// </summary>
         public string LoginServer { get; set; } = "";
+        
+        /// <summary>
+        /// Gets or sets the login server port (default: 5999)
+        /// </summary>
         public int LoginServerPort { get; set; } = 5999;
+        
+        /// <summary>
+        /// Gets or sets the account username
+        /// </summary>
         public string Username { get; set; } = "";
+        
+        /// <summary>
+        /// Gets or sets the account password
+        /// </summary>
         public string Password { get; set; } = "";
+        
+        /// <summary>
+        /// Gets or sets the target world/server name
+        /// </summary>
         public string WorldName { get; set; } = "";
+        
+        /// <summary>
+        /// Gets or sets the character name to play
+        /// </summary>
         public string CharacterName { get; set; } = "";
         
         // Events - High level game events
+        /// <summary>
+        /// Raised when the connection state changes
+        /// </summary>
         public event EventHandler<ConnectionState>? ConnectionStateChanged;
+        
+        /// <summary>
+        /// Raised when the character has been loaded into the game
+        /// </summary>
         public event EventHandler<Character>? CharacterLoaded;
+        
+        /// <summary>
+        /// Raised when the character changes zones
+        /// </summary>
         public event EventHandler<Zone>? ZoneChanged;
+        
+        /// <summary>
+        /// Raised when an NPC spawns in the zone
+        /// </summary>
         public event EventHandler<NPC>? NPCSpawned;
-        public event EventHandler<uint>? NPCDespawned; // SpawnID
+        
+        /// <summary>
+        /// Raised when an NPC despawns from the zone (provides SpawnID)
+        /// </summary>
+        public event EventHandler<uint>? NPCDespawned;
+        
+        /// <summary>
+        /// Raised when another player spawns in the zone
+        /// </summary>
         public event EventHandler<Player>? PlayerSpawned;
-        public event EventHandler<uint>? PlayerDespawned; // SpawnID
+        
+        /// <summary>
+        /// Raised when another player despawns from the zone (provides SpawnID)
+        /// </summary>
+        public event EventHandler<uint>? PlayerDespawned;
+        
+        /// <summary>
+        /// Raised when a chat message is received
+        /// </summary>
         public event EventHandler<ChatMessage>? ChatMessageReceived;
+        
+        /// <summary>
+        /// Raised when login fails with an error message
+        /// </summary>
         public event EventHandler<string>? LoginFailed;
+        
+        /// <summary>
+        /// Raised when the client is disconnected from the server
+        /// </summary>
         public event EventHandler? Disconnected;
+        /// <summary>
+        /// Raised when a player position update is received
+        /// </summary>
         public event EventHandler<PlayerPositionUpdate>? PositionUpdated;
+        
+        /// <summary>
+        /// Raised when a death event occurs
+        /// </summary>
+        public event EventHandler<Death>? DeathReceived;
+        
+        /// <summary>
+        /// Raised when an entity is deleted from the zone
+        /// </summary>
+        public event EventHandler<uint>? EntityDeleted;
+        
+        /// <summary>
+        /// Raised when a consider response is received
+        /// </summary>
+        public event EventHandler<Consider>? ConsiderReceived;
+        
+        /// <summary>
+        /// Raised when mob health information is received
+        /// </summary>
+        public event EventHandler<MobHealth>? MobHealthReceived;
+        
+        /// <summary>
+        /// Raised when damage is dealt or received
+        /// </summary>
+        public event EventHandler<Damage>? DamageReceived;
+        
+        /// <summary>
+        /// Raised when a spell is cast
+        /// </summary>
+        public event EventHandler<CastSpell>? SpellCast;
+        
+        /// <summary>
+        /// Raised when a spell cast is interrupted
+        /// </summary>
+        public event EventHandler<InterruptCast>? SpellInterrupted;
+        
+        /// <summary>
+        /// Raised when an animation is played
+        /// </summary>
+        public event EventHandler<Animation>? AnimationReceived;
+        
+        /// <summary>
+        /// Raised when a buff is applied or updated
+        /// </summary>
+        public event EventHandler<Buff>? BuffReceived;
+        
+        /// <summary>
+        /// Raised when a ground spawn is detected
+        /// </summary>
+        public event EventHandler<GroundSpawn>? GroundSpawnReceived;
+        
+        /// <summary>
+        /// Raised when tracking information is received
+        /// </summary>
+        public event EventHandler<Track>? TrackingReceived;
+        
+        /// <summary>
+        /// Raised when an emote is received
+        /// </summary>
+        public event EventHandler<Emote>? EmoteReceived;
+        /// <summary>
+        /// Raised when experience points are gained or lost
+        /// </summary>
+        public event EventHandler<ExpUpdate>? ExperienceUpdated;
+        
+        /// <summary>
+        /// Raised when the character's level changes
+        /// </summary>
+        public event EventHandler<LevelUpdate>? LevelChanged;
+        
+        /// <summary>
+        /// Raised when a skill is updated
+        /// </summary>
+        public event EventHandler<SkillUpdate>? SkillUpdated;
+        
+        /// <summary>
+        /// Raised when equipment is changed
+        /// </summary>
+        public event EventHandler<WearChange>? WearChanged;
+        
+        /// <summary>
+        /// Raised when an item is moved in inventory
+        /// </summary>
+        public event EventHandler<MoveItem>? ItemMoved;
+        
+        /// <summary>
+        /// Raised when the assist target changes
+        /// </summary>
+        public event EventHandler<ClientTarget>? TargetAssisted;
+        
+        /// <summary>
+        /// Raised when auto-attack is toggled on or off
+        /// </summary>
+        public event EventHandler<byte[]>? AutoAttackToggled;
+        
+        /// <summary>
+        /// Raised when a charm effect is applied
+        /// </summary>
+        public event EventHandler<Charm>? CharmReceived;
+        
+        /// <summary>
+        /// Raised when a stun effect is applied
+        /// </summary>
+        public event EventHandler<Stun>? StunReceived;
+        
+        /// <summary>
+        /// Raised when an illusion is applied
+        /// </summary>
+        public event EventHandler<Illusion>? IllusionReceived;
+        
+        /// <summary>
+        /// Raised when a sound effect is played
+        /// </summary>
+        public event EventHandler<Sound>? SoundReceived;
         
         public EQGameClient(ILogger<EQGameClient> logger)
         {
@@ -118,7 +308,7 @@ namespace OpenEQ.Netcode.GameClient
                 throw new InvalidOperationException("Not connected to game");
             }
             
-            //_zoneStream.SendChatMessage("", "", message);
+            _zoneStream.SendChatMessage("", Character?.Name ?? "", message, (uint)channel);
             _logger.LogDebug("Sent chat message: {Message}", message);
         }
         
@@ -302,16 +492,15 @@ namespace OpenEQ.Netcode.GameClient
         {
             _logger.LogInformation("Received character list with {Count} characters", characters.Count);
             
-            // Print all available characters to console
-            Console.WriteLine("=== AVAILABLE CHARACTERS ===");
+            // Log all available characters
+            _logger.LogInformation("=== AVAILABLE CHARACTERS ===");
             for (int i = 0; i < characters.Count; i++)
             {
                 var character = characters[i];
-                Console.WriteLine($"  {i + 1}. {character.Name} (Level {character.Level}, Race: {character.Race}, Class: {character.Class}, Zone: {character.Zone})");
                 _logger.LogInformation("Available character #{Index}: {CharacterName} (Level {Level}, Race: {Race}, Class: {Class}, Zone: {Zone})",
                     i + 1, character.Name, character.Level, character.Race, character.Class, character.Zone);
             }
-            Console.WriteLine("============================");
+            _logger.LogInformation("============================");
             
             // Find the target character we're supposed to play
             CharacterSelectEntry? targetCharacter = null;
@@ -334,7 +523,7 @@ namespace OpenEQ.Netcode.GameClient
             _logger.LogInformation("=== SELECTING CHARACTER ===");
             _logger.LogInformation("Target character found: {CharacterName} (Level {Level})", 
                 targetCharacter.Value.Name, targetCharacter.Value.Level);
-            Console.WriteLine($"Selecting character: {targetCharacter.Value.Name} (Level {targetCharacter.Value.Level})");
+            _logger.LogInformation("Selecting character: {CharacterName} (Level {Level})", targetCharacter.Value.Name, targetCharacter.Value.Level);
             
             // Create our Character model from the character select data
             Character = new Character
@@ -351,7 +540,7 @@ namespace OpenEQ.Netcode.GameClient
             var enterWorld = new EnterWorld(targetCharacter.Value.Name, false, false);
             _worldStream?.SendEnterWorld(enterWorld);
             
-            Console.WriteLine($"Sent OP_EnterWorld request for character: {targetCharacter.Value.Name}");
+            _logger.LogInformation("Sent OP_EnterWorld request for character: {CharacterName}", targetCharacter.Value.Name);
         }
         
         private async void OnZoneServerReceived(object? sender, ZoneServerInfo zoneServer)
@@ -372,14 +561,14 @@ namespace OpenEQ.Netcode.GameClient
         {
             _logger.LogInformation("=== ENTER WORLD RESPONSE RECEIVED ===");
             _logger.LogInformation("EnterWorld response received - character selection acknowledged by server");
-            Console.WriteLine("✅ Server acknowledged character selection - entering world...");
+            _logger.LogInformation("Server acknowledged character selection - entering world...");
         }
         
         private void OnPostEnterWorldReceived(object? sender, PostEnterWorld postEnterWorld)
         {
             _logger.LogInformation("=== POST ENTER WORLD RECEIVED ===");
             _logger.LogInformation("PostEnterWorld received - character setup complete, ready for zone server");
-            Console.WriteLine("✅ Character setup complete - ready to connect to zone server");
+            _logger.LogInformation("Character setup complete - ready to connect to zone server");
         }
         
         private async Task ConnectToZoneServerAsync(ZoneServerInfo zoneServer)
@@ -400,10 +589,34 @@ namespace OpenEQ.Netcode.GameClient
             // Set up zone event handlers
             _zoneStream.PlayerProfile += OnPlayerProfileReceived;
             _zoneStream.Spawned += OnSpawnReceived;
-            //_zoneStream.Message += OnMessageReceived;
-            //_zoneStream.Death += OnDeathReceived;
+            _zoneStream.Message += OnMessageReceived;
+            _zoneStream.Death += OnDeathReceived;
             //_zoneStream.Zoned += OnZonedReceived;
             _zoneStream.PositionUpdated += OnPositionUpdated;
+            
+            // Wire up additional events
+            _zoneStream.DeleteSpawn += OnDeleteSpawn;
+            _zoneStream.Consider += (s, e) => ConsiderReceived?.Invoke(this, e);
+            _zoneStream.MobHealth += (s, e) => MobHealthReceived?.Invoke(this, e);
+            _zoneStream.Damage += (s, e) => DamageReceived?.Invoke(this, e);
+            _zoneStream.CastSpell += (s, e) => SpellCast?.Invoke(this, e);
+            _zoneStream.InterruptCast += (s, e) => SpellInterrupted?.Invoke(this, e);
+            _zoneStream.Animation += (s, e) => AnimationReceived?.Invoke(this, e);
+            _zoneStream.Buff += (s, e) => BuffReceived?.Invoke(this, e);
+            _zoneStream.GroundSpawn += (s, e) => GroundSpawnReceived?.Invoke(this, e);
+            _zoneStream.Track += (s, e) => TrackingReceived?.Invoke(this, e);
+            _zoneStream.Emote += (s, e) => EmoteReceived?.Invoke(this, e);
+            _zoneStream.ExpUpdate += (s, e) => ExperienceUpdated?.Invoke(this, e);
+            _zoneStream.LevelUpdate += (s, e) => LevelChanged?.Invoke(this, e);
+            _zoneStream.SkillUpdate += (s, e) => SkillUpdated?.Invoke(this, e);
+            _zoneStream.WearChange += (s, e) => WearChanged?.Invoke(this, e);
+            _zoneStream.MoveItem += (s, e) => ItemMoved?.Invoke(this, e);
+            _zoneStream.Assist += (s, e) => TargetAssisted?.Invoke(this, e);
+            _zoneStream.AutoAttack += (s, e) => AutoAttackToggled?.Invoke(this, e);
+            _zoneStream.Charm += (s, e) => CharmReceived?.Invoke(this, e);
+            _zoneStream.Stun += (s, e) => StunReceived?.Invoke(this, e);
+            _zoneStream.Illusion += (s, e) => IllusionReceived?.Invoke(this, e);
+            _zoneStream.Sound += (s, e) => SoundReceived?.Invoke(this, e);
             
             await Task.Delay(3000);
         }
@@ -528,13 +741,62 @@ namespace OpenEQ.Netcode.GameClient
         {
             if (CurrentZone == null) return;
             
+            // Check if it was an NPC or Player and fire appropriate despawn events
+            bool wasNPC = CurrentZone.NPCs.ContainsKey(death.SpawnId);
+            bool wasPlayer = CurrentZone.Players.ContainsKey(death.SpawnId);
+            
             // Remove dead spawns from tracking
             CurrentZone.RemoveNPC(death.SpawnId);
             CurrentZone.RemovePlayer(death.SpawnId);
             
+            // Fire despawn events so map gets updated
+            if (wasNPC)
+            {
+                NPCDespawned?.Invoke(this, death.SpawnId);
+                _logger.LogDebug("NPC died and despawned: SpawnID {SpawnID}", death.SpawnId);
+            }
+            if (wasPlayer)
+            {
+                PlayerDespawned?.Invoke(this, death.SpawnId);
+                _logger.LogDebug("Player died and despawned: SpawnID {SpawnID}", death.SpawnId);
+            }
+            
+            // Forward the death event
+            DeathReceived?.Invoke(this, death);
+            
             _logger.LogDebug("Death event: SpawnID {SpawnID}", death.SpawnId);
         }
         
+        private void OnDeleteSpawn(object? sender, uint spawnId)
+        {
+            if (CurrentZone == null) return;
+            
+            // Check if it was an NPC or Player and fire appropriate despawn events
+            bool wasNPC = CurrentZone.NPCs.ContainsKey(spawnId);
+            bool wasPlayer = CurrentZone.Players.ContainsKey(spawnId);
+            
+            // Remove from tracking
+            CurrentZone.RemoveNPC(spawnId);
+            CurrentZone.RemovePlayer(spawnId);
+            
+            // Fire despawn events so map gets updated
+            if (wasNPC)
+            {
+                NPCDespawned?.Invoke(this, spawnId);
+                _logger.LogDebug("NPC deleted and despawned: SpawnID {SpawnID}", spawnId);
+            }
+            if (wasPlayer)
+            {
+                PlayerDespawned?.Invoke(this, spawnId);
+                _logger.LogDebug("Player deleted and despawned: SpawnID {SpawnID}", spawnId);
+            }
+            
+            // Forward the entity deleted event
+            EntityDeleted?.Invoke(this, spawnId);
+            
+            _logger.LogDebug("Delete spawn event: SpawnID {SpawnID}", spawnId);
+        }
+
         private void OnZonedReceived(object? sender, object? zone)
         {
             _logger.LogInformation("Zone change detected");

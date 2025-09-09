@@ -45,10 +45,12 @@ namespace eqmap
 
             lua = new Lua();
             account = new Account();
-            log = new Log(this);            
+            log = new Log(this);
+            chat = null;  // Will be initialized when game client connects
             account.OnLogon += Account_OnLogon;
             lua["account"] = account;
-            lua["log"] = log;            
+            lua["log"] = log;
+            lua["chat"] = chat;
             lua.RegisterFunction("SetLogonResultHandler", this, GetType().GetMethod("SetLogonResultHandler"));
             lua.RegisterFunction("SetMessageEventHandler", this, GetType().GetMethod("SetMessageEventHandler"));
             lua.RegisterFunction("SetSpawnEventHandler", this, GetType().GetMethod("SetSpawnEventHandler"));
@@ -82,8 +84,7 @@ namespace eqmap
             // Apply config           
             NLog.LogManager.Configuration = config;
 
-            ServerLogs serverLogs = new ServerLogs();
-            serverLogs.Show();
+            // ServerLogs functionality removed - server logs accessed through alternative method
         }
 
         #region Draw Map
@@ -694,6 +695,71 @@ namespace eqmap
                 this.toY = Convert.ToInt32(l[4].Split('.')[0].Trim());
                 this.toZ = Convert.ToInt32(l[5].Split('.')[0].Trim());
                 this.pen = new Pen(Color.FromArgb(255, Convert.ToInt32(l[6].Trim()), Convert.ToInt32(l[7].Trim()), Convert.ToInt32(l[8].Trim())));
+            }
+        }
+
+        class Chat
+        {
+            private Account account;
+            private EQGameClient gameClient;
+            
+            public Chat(Account account, EQGameClient gameClient)
+            {
+                this.account = account;
+                this.gameClient = gameClient;
+            }
+            
+            public void Say(string message)
+            {
+                if (gameClient != null && gameClient.State == ConnectionState.InGame)
+                {
+                    gameClient.SendChat(message, ChatChannel.Say);
+                    Logger.Info($"Said: {message}");
+                }
+                else
+                {
+                    Logger.Error("Cannot send chat - not connected to game");
+                }
+            }
+            
+            public void Group(string message)
+            {
+                if (gameClient != null && gameClient.State == ConnectionState.InGame)
+                {
+                    gameClient.SendChat(message, ChatChannel.Group);
+                    Logger.Info($"Group: {message}");
+                }
+                else
+                {
+                    Logger.Error("Cannot send group chat - not connected to game");
+                }
+            }
+            
+            public void Guild(string message)
+            {
+                if (gameClient != null && gameClient.State == ConnectionState.InGame)
+                {
+                    gameClient.SendChat(message, ChatChannel.Guild);
+                    Logger.Info($"Guild: {message}");
+                }
+                else
+                {
+                    Logger.Error("Cannot send guild chat - not connected to game");
+                }
+            }
+            
+            public void Tell(string target, string message)
+            {
+                if (gameClient != null && gameClient.State == ConnectionState.InGame)
+                {
+                    // For tells, we might need to implement a different method or use a different channel
+                    gameClient.SendChat($"{target}, {message}", ChatChannel.Tell);
+                    Logger.Info($"Tell to {target}: {message}");
+                }
+                else
+                {
+                    Logger.Error("Cannot send tell - not connected to game");
+                }
             }
         }
 

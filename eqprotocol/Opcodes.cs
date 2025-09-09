@@ -486,6 +486,25 @@
         MercenaryDismiss = 0x319a,
         MercenaryTimerRequest = 0x184e,
         PreLogoutReply = 0x711e,
-        LogoutReply = 0x3cdc
+        LogoutReply = 0x3cdc,
+        
+        // Additional Underfoot opcodes
+        MoveMultipleItems = 0x40e8,
+        PetCommandState = 0x1a79,
+        SetFace = 0x6cfa,
+        MarkRaidNPC = 0x3ec7,
+        ClearRaidNPCMarks = 0x2af4,
+        CashReward = 0x039d,
+        ItemAdvancedLoreText = 0x4eb3,
+        QueryUCSServerStatus = 0x4481,
+        GuildMemberLevel = 0x4d4e,
+        GuildMemberRankAltBanker = 0x4ffe,
+        GuildMemberPublicNote = 0x526d,
+        GuildMemberAdd = 0x7337,
+        GuildMemberRename = 0x5fc7,
+        GuildMemberDelete = 0x190c,
+        GuildMemberDetails = 0x0a53,
+        GuildRenameGuild = 0x480e,
+        GuildDeleteGuild = 0x0736
     }
 }
