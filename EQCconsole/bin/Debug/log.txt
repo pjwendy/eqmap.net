@@ -1,3 +1,0 @@
-2025-09-07 19:13:27.6002 INFO NetClient.Program Starting eqconsole 
-2025-09-07 19:13:27.6132 INFO NetClient.Program Connecting to LoginServer @ 172.29.179.249:5999 
-2025-09-07 19:13:27.6328 INFO NetClient.Program Username >  
