@@ -36,7 +36,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 		docs\Underfoot_Protocol_Reference.md = docs\Underfoot_Protocol_Reference.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EQConsole", "EQCconsole\EQConsole.csproj", "{125181BE-8AF7-4C75-A2FC-9F5AA9ED6C92}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EQConsole", "EQConsole\EQConsole.csproj", "{125181BE-8AF7-4C75-A2FC-9F5AA9ED6C92}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
