@@ -41,7 +41,7 @@ namespace OpenEQ.Netcode.GameClient.Models
             Players.TryRemove(spawnId, out _);
         }
         
-        public IEnumerable<NPC> GetNearbyNPCs(float x, float y, float radius)
+        public IEnumerable<NPC> GetNearbyNPCs(double x, double y, double radius)
         {
             foreach (var npc in NPCs.Values)
             {

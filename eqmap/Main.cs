@@ -7,12 +7,14 @@ using NLua;
 using OpenEQ.Netcode;
 using OpenEQ.Netcode.GameClient;
 using OpenEQ.Netcode.GameClient.Models;
+using OpenEQ.Netcode.GameClient.Maps;
 using System.Drawing;
 using NLog;
 using MySqlConnector;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Action = System.Action;
 
 namespace eqmap
 {
@@ -33,7 +35,7 @@ namespace eqmap
         private PlayerProfile player;
         private Map map = new Map();
         private Dictionary<string, string> zones = new Dictionary<string, string>();
-        private ConcurrentDictionary<uint, Spawn> spawns = new ConcurrentDictionary<uint, Spawn>();
+        private ConcurrentDictionary<uint, ZoneEntry> spawns = new ConcurrentDictionary<uint, ZoneEntry>();
         private dynamic settings;
         public Main()
         {
@@ -72,19 +74,92 @@ namespace eqmap
             if (File.Exists(@"logs\unhandled.txt"))
                 File.Delete(@"logs\unhandled.txt");
 
-            // Create config for NLog so we can log to file as well as to file
-            var config = new NLog.Config.LoggingConfiguration();
+            // Create shared logs directory in solution root if it doesn't exist
+            string solutionLogsDir = Path.Combine("..", "logs");
+            string solutionArchiveDir = Path.Combine("..", "logs", "archive");
 
-            // Targets where to log to: File and Console
-            var logfile = new NLog.Targets.FileTarget("logfile") { FileName = @"logs\log.txt" };
+            if (!Directory.Exists(solutionLogsDir))
+                Directory.CreateDirectory(solutionLogsDir);
 
-            // Rules for mapping loggers to targets            
-            config.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, logfile);
+            if (!Directory.Exists(solutionArchiveDir))
+                Directory.CreateDirectory(solutionArchiveDir);
 
-            // Apply config           
-            NLog.LogManager.Configuration = config;
+            // NLog will automatically load NLog.config from the application directory
+            // If the config file doesn't exist, use fallback configuration
+            if (!File.Exists("NLog.config"))
+            {
+                Logger.Warn("NLog.config file not found. Using fallback configuration.");
+
+                // Fallback to programmatic configuration if config file is missing
+                var config = new NLog.Config.LoggingConfiguration();
+                var logfile = new NLog.Targets.FileTarget("logfile") { FileName = @"..\logs\EQMap-Combined-fallback.log" };
+                config.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, logfile);
+                NLog.LogManager.Configuration = config;
+            }
+
+            // Update log status display
+            UpdateLogStatusDisplay();
 
             // ServerLogs functionality removed - server logs accessed through alternative method
+        }
+
+        private void UpdateLogStatusDisplay()
+        {
+            try
+            {
+                string baseDir = Application.StartupPath;
+                string solutionRoot = Path.GetFullPath(Path.Combine(baseDir, ".."));
+                string combinedLogPath = Path.Combine(solutionRoot, "logs", $"EQMap-Combined-{DateTime.Now:yyyy-MM-dd}.log");
+                string mainLogPath = Path.Combine(solutionRoot, "logs", $"EQMap-Only-{DateTime.Now:yyyy-MM-dd}.log");
+                string luaLogPath = Path.Combine(solutionRoot, "logs", $"Lua-Only-{DateTime.Now:yyyy-MM-dd}.log");
+
+                string statusText = $"Logs: COMBINED={Path.GetFileName(combinedLogPath)} (EQMap+Lua+EQProtocol) - Click to open logs folder";
+
+                // Update the status label safely from UI thread
+                if (labelLogStatus.InvokeRequired)
+                {
+                    labelLogStatus.Invoke(new Action(() => labelLogStatus.Text = statusText));
+                }
+                else
+                {
+                    labelLogStatus.Text = statusText;
+                }
+
+                // Also log the paths to the main log for reference
+                Logger.Info($"EQMap log file locations:");
+                Logger.Info($"  COMBINED (EQMap + Lua + EQProtocol): {combinedLogPath}");
+                Logger.Info($"  Optional - EQMap Only: {mainLogPath}");
+                Logger.Info($"  Optional - Lua Only: {luaLogPath}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Failed to update log status display");
+            }
+        }
+
+        private void labelLogStatus_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string baseDir = Application.StartupPath;
+                string solutionRoot = Path.GetFullPath(Path.Combine(baseDir, ".."));
+                string logsDir = Path.Combine(solutionRoot, "logs");
+
+                // Create logs directory if it doesn't exist
+                if (!Directory.Exists(logsDir))
+                {
+                    Directory.CreateDirectory(logsDir);
+                }
+
+                // Open the logs folder in Windows Explorer
+                System.Diagnostics.Process.Start("explorer.exe", logsDir);
+                Logger.Info("Opened logs folder in Windows Explorer");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Failed to open logs folder");
+                MessageBox.Show($"Failed to open logs folder: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         #region Draw Map
@@ -103,44 +178,33 @@ namespace eqmap
                 Info($"Loading map for zone: {map.zone} (ID: {zoneIdStr})");
                 
                 map.zoom = 1f;
-                map.maxX = 0;
-                map.maxY = 0;
-                map.minX = 0;
-                map.minY = 0;
                 map.lines = new List<Line>();
                 
-                if (!Directory.Exists("maps"))
-                {
-                    Info("Maps directory not found");
-                    return;
-                }
+                // Use the new MapReader from EQProtocol
+                var mapData = MapReader.ReadMapFile(map.zone);
                 
-                FileInfo[] maps = new DirectoryInfo("maps").GetFiles($"{map.zone}.txt", SearchOption.AllDirectories);
-                
-                if (maps.Length == 0)
+                if (mapData == null)
                 {
-                    Info($"No map file found for zone: {map.zone}.txt");
+                    Info($"No map file found for zone: {map.zone}");
                     return;
                 }
 
-                Info($"Loading map file: {maps[0].FullName}");
-                int lineCount = 0;
+                Info($"Loading map for zone: {map.zone}");
                 
-                foreach (string line in File.ReadAllLines(maps[0].FullName))
+                // Convert MapLines to the local Line format
+                foreach (var mapLine in mapData.Lines)
                 {
-                    if (line.StartsWith("L"))
-                    {                   
-                        Line l = new Line(line);
-                        map.lines.Add(l);
-                        lineCount++;
-                        map.maxX = l.fromX > l.toX ? (map.maxX < l.fromX ? l.fromX : map.maxX) : (map.maxX < l.toX ? l.toX : map.maxX);
-                        map.maxY = l.fromY > l.toY ? (map.maxY < l.fromY ? l.fromY : map.maxY) : (map.maxY < l.toY ? l.toY : map.maxY);
-                        map.minX = l.fromX < l.toX ? (map.minX > l.fromX ? l.fromX : map.minX) : (map.minX > l.toX ? l.toX : map.minX);
-                        map.minY = l.fromY < l.toY ? (map.minY > l.fromY ? l.fromY : map.minY) : (map.minY > l.toY ? l.toY : map.minY);
-                    }
+                    Line l = new Line(mapLine);
+                    map.lines.Add(l);
                 }
                 
-                Info($"Map loaded with {lineCount} lines. Bounds: X({map.minX},{map.maxX}) Y({map.minY},{map.maxY})");
+                // Use the bounds calculated by MapReader
+                map.maxX = mapData.MaxX;
+                map.maxY = mapData.MaxY;
+                map.minX = mapData.MinX;
+                map.minY = mapData.MinY;
+                
+                Info($"Map loaded with {mapData.Lines.Count} lines. Bounds: X({map.minX},{map.maxX}) Y({map.minY},{map.maxY})");
                 MapReady = true;            
             }
             catch (Exception ex)
@@ -196,7 +260,7 @@ namespace eqmap
             {                    
                 TextRenderer.DrawText(g, "(0,0)", font, new Point(map.adjustedX(0), map.adjustedY(0)), Color.Black);
             
-                foreach(Spawn spawn in spawns.Values)
+                foreach(ZoneEntry spawn in spawns.Values)
                 {
                     TextRenderer.DrawText(
                         g, $"{spawn.Name}", 
@@ -267,7 +331,8 @@ namespace eqmap
             
             // Create and configure the game client with proper logger
             gameClient = new EQGameClient(gameClientLogger);
-            
+            gameClient.PacketRecordingMode = OpenEQ.Netcode.GameClient.Events.RecordingMode.Full;
+
             // Subscribe to events
             gameClient.ConnectionStateChanged += OnConnectionStateChanged;
             gameClient.Disconnected += OnGameClientDisconnected;
@@ -278,7 +343,9 @@ namespace eqmap
             gameClient.NPCDespawned += OnNPCDespawned;
             gameClient.ZoneChanged += OnZoneChanged;
             gameClient.LoginFailed += OnLoginFailed;
-            gameClient.PositionUpdated += OnPositionUpdated;
+            gameClient.ClientUpdated += OnClientUpdated;
+            gameClient.MobUpdated += OnMobUpdated;
+            gameClient.NPCMoveUpdated += OnNPCMoveUpdated;
 
             try
             {
@@ -351,7 +418,7 @@ namespace eqmap
             CallLogonResult(false, error);
         }
 
-        private void OnChatMessageReceived(object sender, ChatMessage message)
+        private void OnChatMessageReceived(object sender, OpenEQ.Netcode.GameClient.Models.ChatMessage message)
         {
             Info($"[{message.Channel}] {message.From}: {message.Message}");
             // Convert to old ChannelMessage format for Lua compatibility
@@ -369,7 +436,7 @@ namespace eqmap
             Info($"Player spawned: {player.Name} at X:{player.X} Y:{player.Y}");
             
             // Convert Player to Spawn for compatibility
-            var spawn = new Spawn
+            var spawn = new ZoneEntry
             {
                 SpawnID = player.SpawnID,
                 Name = player.Name,
@@ -394,7 +461,7 @@ namespace eqmap
             Info($"NPC spawned: {npc.Name} at X:{npc.X} Y:{npc.Y}");
             
             // Convert NPC to Spawn for compatibility
-            var spawn = new Spawn
+            var spawn = new ZoneEntry   
             {
                 SpawnID = npc.SpawnID,
                 Name = npc.Name,
@@ -417,7 +484,7 @@ namespace eqmap
         private void OnPlayerDespawned(object sender, uint spawnId)
         {
             Info($"Player despawned: {spawnId}");
-            Spawn sp;
+            ZoneEntry sp;
             spawns.TryRemove(spawnId, out sp);
             BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
         }
@@ -425,15 +492,15 @@ namespace eqmap
         private void OnNPCDespawned(object sender, uint spawnId)
         {
             Info($"NPC despawned: {spawnId}");
-            Spawn sp;
+            ZoneEntry sp;
             spawns.TryRemove(spawnId, out sp);
             BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
         }
 
-        private void OnPositionUpdated(object sender, PlayerPositionUpdate update)
+        private void OnClientUpdated(object sender, ClientUpdateFromServer update)
         {
             // Update the position of the spawn if it exists
-            if (spawns.TryGetValue(update.ID, out Spawn spawn))
+            if (spawns.TryGetValue(update.ID, out ZoneEntry spawn))
             {
                 // Since Spawn is a struct, we need to update the position and put it back
                 spawn.Position = new SpawnPosition
@@ -455,7 +522,65 @@ namespace eqmap
             else
             {
                 // Log if we're getting updates for unknown spawns
-                Info($"Position update for unknown spawn ID {update.ID}");
+                Info($"Position update for unknown client ID {update.ID}");
+            }
+        }
+
+        private void OnMobUpdated(object sender, MobUpdate update)
+        {
+            // Update the position of the spawn if it exists
+            if (spawns.TryGetValue(update.ID, out ZoneEntry spawn))
+            {
+                // Since Spawn is a struct, we need to update the position and put it back
+                spawn.Position = new SpawnPosition
+                {
+                    X = (int)update.Position.X,
+                    Y = (int)update.Position.Y,
+                    Z = (int)update.Position.Z,
+                    Heading = (ushort)update.Position.Heading
+                };
+
+                // Put the updated spawn back in the dictionary
+                spawns[update.ID] = spawn;
+
+                Info($"Position updated for spawn {update.ID}: ({spawn.Position.X:F1}, {spawn.Position.Y:F1})");
+
+                // Refresh the map to show the new position
+                BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
+            }
+            else
+            {
+                // Log if we're getting updates for unknown spawns
+                Info($"Position update for unknown mob ID {update.ID}");
+            }
+        }
+
+        private void OnNPCMoveUpdated(object sender, NPCMoveUpdate update)
+        {
+            // Update the position of the spawn if it exists
+            if (spawns.TryGetValue(update.ID, out ZoneEntry spawn))
+            {
+                // Since Spawn is a struct, we need to update the position and put it back
+                spawn.Position = new SpawnPosition
+                {
+                    X = (int)update.Position.X,
+                    Y = (int)update.Position.Y,
+                    Z = (int)update.Position.Z,
+                    Heading = (ushort)update.Position.Heading
+                };
+
+                // Put the updated spawn back in the dictionary
+                spawns[update.ID] = spawn;
+
+                Info($"Position updated for spawn {update.ID}: ({spawn.Position.X:F1}, {spawn.Position.Y:F1})");
+
+                // Refresh the map to show the new position
+                BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
+            }
+            else
+            {
+                // Log if we're getting updates for unknown spawns
+                Info($"Position update for unknown NPC ID {update.ID}");
             }
         }
 
@@ -548,13 +673,12 @@ namespace eqmap
             //close Connection
             connection.Close();
 
-            List<string> fis = new List<string>();
-            foreach (FileInfo fi in new DirectoryInfo(@"maps").GetFiles())
-                fis.Add(fi.Name.Replace(".txt", ""));
-
+            // Get available zones from EQProtocol MapReader
+            var availableZones = MapReader.GetAvailableZones();
+            
             //return list to be displayed
             foreach (string zone in list)
-                if (fis.Contains(zone.Trim()))
+                if (availableZones.Contains(zone.Trim()))
                     listboxZone.Items.Add(zone);
         }
         private void Form1_FormClosing(object sender, System.Windows.Forms.FormClosingEventArgs e)
@@ -695,6 +819,17 @@ namespace eqmap
                 this.toY = Convert.ToInt32(l[4].Split('.')[0].Trim());
                 this.toZ = Convert.ToInt32(l[5].Split('.')[0].Trim());
                 this.pen = new Pen(Color.FromArgb(255, Convert.ToInt32(l[6].Trim()), Convert.ToInt32(l[7].Trim()), Convert.ToInt32(l[8].Trim())));
+            }
+            
+            public Line(MapLine mapLine)
+            {
+                this.fromX = mapLine.FromX;
+                this.fromY = mapLine.FromY;
+                this.fromZ = mapLine.FromZ;
+                this.toX = mapLine.ToX;
+                this.toY = mapLine.ToY;
+                this.toZ = mapLine.ToZ;
+                this.pen = new Pen(Color.FromArgb(255, mapLine.Red, mapLine.Green, mapLine.Blue));
             }
         }
 

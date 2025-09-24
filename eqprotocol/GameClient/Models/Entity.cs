@@ -25,28 +25,28 @@ namespace OpenEQ.Netcode.GameClient.Models
         // Last update tracking
         public DateTime LastUpdate { get; set; } = DateTime.Now;
         
-        public float DistanceTo(Entity other)
+        public double DistanceTo(Entity other)
         {
             return DistanceTo(other.X, other.Y, other.Z);
         }
         
-        public float DistanceTo(float x, float y, float z)
+        public double DistanceTo(double x, double y, double z)
         {
-            return (float)Math.Sqrt(
+            return (double)Math.Sqrt(
                 Math.Pow(X - x, 2) + 
                 Math.Pow(Y - y, 2) + 
                 Math.Pow(Z - z, 2)
             );
         }
         
-        public float Distance2D(Entity other)
+        public double Distance2D(Entity other)
         {
             return Distance2D(other.X, other.Y);
         }
         
-        public float Distance2D(float x, float y)
+        public double Distance2D(double x, double y)
         {
-            return (float)Math.Sqrt(
+            return (double)Math.Sqrt(
                 Math.Pow(X - x, 2) + 
                 Math.Pow(Y - y, 2)
             );

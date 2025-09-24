@@ -1,10 +1,10 @@
 {
   "database": {
-    "ip": "host.docker.external",
+    "ip": "172.29.179.249",
     "name": "peq",
     "port": "3306",
     "uid": "eqemu",
-    "password": "",
+    "password": "eqemu",
     "eqemu-server": " honeytree-eqemu-server-1"
   }
 }

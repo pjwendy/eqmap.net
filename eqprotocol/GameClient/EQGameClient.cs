@@ -1,9 +1,14 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using OpenEQ.Netcode;
 using OpenEQ.Netcode.GameClient.Models;
+using OpenEQ.Netcode.GameClient.Events;
+using OpenEQ.Netcode.GameClient.Navigation;
 using System.Collections.Generic;
+using EQProtocol.Streams.Login;
+using EQProtocol.Streams.World;
+using EQProtocol.Streams.Zone;
+using EQProtocol.Streams.World.Packets;
 
 namespace OpenEQ.Netcode.GameClient
 {
@@ -23,9 +28,15 @@ namespace OpenEQ.Netcode.GameClient
         private LoginStream? _loginStream;
         private WorldStream? _worldStream;
         private ZoneStream? _zoneStream;
+        private IPacketEventEmitter? _packetEventEmitter;
         
         private TaskCompletionSource<bool>? _loginCompletionSource;
         private bool _disposed = false;
+        
+        // Navigation components
+        private NavigationManager? _navigationManager;
+        private MovementManager? _movementManager;
+        private uint _positionSequence = 0;
         
         // Game State
         /// <summary>
@@ -42,6 +53,16 @@ namespace OpenEQ.Netcode.GameClient
         /// Gets the current connection state of the game client
         /// </summary>
         public ConnectionState State { get; private set; } = ConnectionState.Disconnected;
+        
+        /// <summary>
+        /// Gets the navigation manager for pathfinding and nav mesh operations
+        /// </summary>
+        public NavigationManager? Navigation => _navigationManager;
+        
+        /// <summary>
+        /// Gets the movement manager for controlling character movement
+        /// </summary>
+        public MovementManager? Movement => _movementManager;
         
         // Configuration
         /// <summary>
@@ -73,6 +94,16 @@ namespace OpenEQ.Netcode.GameClient
         /// Gets or sets the character name to play
         /// </summary>
         public string CharacterName { get; set; } = "";
+        
+        /// <summary>
+        /// Gets or sets the packet recording mode for narration engine
+        /// </summary>
+        public RecordingMode PacketRecordingMode { get; set; } = RecordingMode.Off;
+        
+        /// <summary>
+        /// Gets or sets the base directory for packet capture files
+        /// </summary>
+        public string PacketCaptureDirectory { get; set; } = "";
         
         // Events - High level game events
         /// <summary>
@@ -113,7 +144,7 @@ namespace OpenEQ.Netcode.GameClient
         /// <summary>
         /// Raised when a chat message is received
         /// </summary>
-        public event EventHandler<ChatMessage>? ChatMessageReceived;
+        public event EventHandler<OpenEQ.Netcode.GameClient.Models.ChatMessage>? ChatMessageReceived;
         
         /// <summary>
         /// Raised when login fails with an error message
@@ -127,8 +158,15 @@ namespace OpenEQ.Netcode.GameClient
         /// <summary>
         /// Raised when a player position update is received
         /// </summary>
-        public event EventHandler<PlayerPositionUpdate>? PositionUpdated;
-        
+        public event EventHandler<ClientUpdateFromServer>? ClientUpdated;
+        /// <summary>
+        /// Raised when a mob position update is received
+        /// </summary>
+        public event EventHandler<MobUpdate>? MobUpdated;
+        /// <summary>
+        /// Raised when a NPC position update is received
+        /// </summary>
+        public event EventHandler<NPCMoveUpdate>? NPCMoveUpdated;
         /// <summary>
         /// Raised when a death event occurs
         /// </summary>
@@ -216,7 +254,7 @@ namespace OpenEQ.Netcode.GameClient
         /// <summary>
         /// Raised when the assist target changes
         /// </summary>
-        public event EventHandler<ClientTarget>? TargetAssisted;
+        public event EventHandler<Assist>? TargetAssisted;
         
         /// <summary>
         /// Raised when auto-attack is toggled on or off
@@ -246,6 +284,16 @@ namespace OpenEQ.Netcode.GameClient
         public EQGameClient(ILogger<EQGameClient> logger)
         {
             _logger = logger;
+            
+            // Initialize navigation components
+            var navigationLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<NavigationManager>();
+            var movementLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<MovementManager>();
+            
+            _navigationManager = new NavigationManager(navigationLogger);
+            _movementManager = new MovementManager(_navigationManager, movementLogger, SendPositionToServer);
+            
+            // Wire up movement events
+            _movementManager.OnPositionUpdate += OnMovementPositionUpdate;
         }
         
         /// <summary>
@@ -269,6 +317,9 @@ namespace OpenEQ.Netcode.GameClient
             try
             {
                 SetConnectionState(ConnectionState.Connecting);
+                
+                // Initialize packet capture if enabled
+                InitializePacketCapture();
                 
                 _loginCompletionSource = new TaskCompletionSource<bool>();
                 
@@ -346,6 +397,34 @@ namespace OpenEQ.Netcode.GameClient
         }
         
         /// <summary>
+        /// Initialize packet capture system
+        /// </summary>
+        public void InitializePacketCapture()
+        {
+            if (PacketRecordingMode == RecordingMode.Off)
+            {
+                _packetEventEmitter?.Dispose();
+                _packetEventEmitter = null;
+                return;
+            }
+            
+            var captureDir = string.IsNullOrEmpty(PacketCaptureDirectory) 
+                ? null 
+                : PacketCaptureDirectory;
+                
+            _packetEventEmitter?.Dispose();
+            _packetEventEmitter = new FilePacketEventEmitter(captureDir, PacketRecordingMode);
+            
+            _logger.LogInformation("Packet capture initialized: Mode={Mode}, Directory={Directory}", 
+                PacketRecordingMode, captureDir ?? "default");
+        }
+        
+        /// <summary>
+        /// Get the current packet event emitter (for stream integration)
+        /// </summary>
+        internal IPacketEventEmitter? GetPacketEventEmitter() => _packetEventEmitter;
+        
+        /// <summary>
         /// Disconnect from the game
         /// </summary>
         public void Disconnect()
@@ -382,6 +461,10 @@ namespace OpenEQ.Netcode.GameClient
         {
             if (!_disposed)
             {
+                _movementManager?.Dispose();
+                _navigationManager?.ClearCache();
+                
+                _packetEventEmitter?.Dispose();
                 Disconnect();
                 _disposed = true;
             }
@@ -395,6 +478,7 @@ namespace OpenEQ.Netcode.GameClient
             
             _loginStream = new LoginStream(LoginServer, LoginServerPort);
             _loginStream.Debug = true; // Enable debug to see login packets
+            _loginStream.SetPacketEmitter(_packetEventEmitter);
             
             // Set up login event handlers
             _loginStream.LoginSuccess += OnLoginSuccess;
@@ -476,13 +560,14 @@ namespace OpenEQ.Netcode.GameClient
             
             _worldStream = new WorldStream(server.WorldIP, 9000, _loginStream.AccountID, _loginStream.SessionKey);
             _worldStream.Debug = true; // Enable debug to see world packets
+            _worldStream.SetPacketEmitter(_packetEventEmitter);
             
             // Set up world event handlers
             _worldStream.CharacterList += OnCharacterListReceived;
             _worldStream.ZoneServer += OnZoneServerReceived;
             _worldStream.MOTD += OnMOTDReceived;
-            //_worldStream.EnterWorld += OnEnterWorldResponse;
-            //_worldStream.PostEnterWorld += OnPostEnterWorldReceived;
+            _worldStream.EnterWorld += OnEnterWorldResponse;
+            _worldStream.PostEnterWorld += OnPostEnterWorldReceived;
             
             // Wait for character list
             await Task.Delay(3000);
@@ -538,8 +623,7 @@ namespace OpenEQ.Netcode.GameClient
             // Send OP_EnterWorld to start session with selected character
             _logger.LogInformation("Sending OP_EnterWorld packet for character: {CharacterName}", targetCharacter.Value.Name);
             var enterWorld = new EnterWorld(targetCharacter.Value.Name, false, false);
-            _worldStream?.SendEnterWorld(enterWorld);
-            
+            _worldStream?.SendEnterWorld(enterWorld);            
             _logger.LogInformation("Sent OP_EnterWorld request for character: {CharacterName}", targetCharacter.Value.Name);
         }
         
@@ -557,11 +641,11 @@ namespace OpenEQ.Netcode.GameClient
             }
         }
         
-        private void OnEnterWorldResponse(object? sender, EnterWorldStatus enterWorldStatus)
+        private void OnEnterWorldResponse(object? sender, EnterWorld enterWorldStatus)
         {
             _logger.LogInformation("=== ENTER WORLD RESPONSE RECEIVED ===");
             _logger.LogInformation("EnterWorld response received - character selection acknowledged by server");
-            _logger.LogInformation("Server acknowledged character selection - entering world...");
+            _logger.LogInformation("Server acknowledged character selection - entering world...");            
         }
         
         private void OnPostEnterWorldReceived(object? sender, PostEnterWorld postEnterWorld)
@@ -585,15 +669,18 @@ namespace OpenEQ.Netcode.GameClient
             
             _zoneStream = new ZoneStream(zoneServer.Host, zoneServer.Port, Character.Name);
             _zoneStream.Debug = true; // Enable debug to see zone packets
+            _zoneStream.SetPacketEmitter(_packetEventEmitter);
             
             // Set up zone event handlers
             _zoneStream.PlayerProfile += OnPlayerProfileReceived;
-            _zoneStream.Spawned += OnSpawnReceived;
+            _zoneStream.ZoneEntry += OnSpawnReceived;
             _zoneStream.Message += OnMessageReceived;
             _zoneStream.Death += OnDeathReceived;
             //_zoneStream.Zoned += OnZonedReceived;
-            _zoneStream.PositionUpdated += OnPositionUpdated;
-            
+            _zoneStream.ClientUpdate += OnClientUpdated;
+            _zoneStream.MobUpdate += OnMobUpdated;
+            _zoneStream.NPCMoveUpdate += OnNPCMoveUpdated;
+
             // Wire up additional events
             _zoneStream.DeleteSpawn += OnDeleteSpawn;
             _zoneStream.Consider += (s, e) => ConsiderReceived?.Invoke(this, e);
@@ -659,7 +746,7 @@ namespace OpenEQ.Netcode.GameClient
             _loginCompletionSource?.SetResult(true);
         }
         
-        private void OnSpawnReceived(object? sender, Spawn spawn)
+        private void OnSpawnReceived(object? sender, ZoneEntry spawn)
         {
             if (CurrentZone == null) return;
             
@@ -696,6 +783,23 @@ namespace OpenEQ.Netcode.GameClient
                 
                 CurrentZone.AddPlayer(player);
                 _logger.LogDebug("Player spawned: {PlayerName}", player.Name);
+                
+                // Emit game event for narration engine
+                _packetEventEmitter?.EmitGameEvent(GameEventHelper.CreateSpawnEvent(
+                    spawn.SpawnID.ToString(), 
+                    spawn.Name, 
+                    "entity.player_spawn", 
+                    CurrentZone.Name, 
+                    spawn.Position.X, 
+                    spawn.Position.Y, 
+                    spawn.Position.Z,
+                    new Dictionary<string, object>
+                    {
+                        {"level", spawn.Level},
+                        {"race", spawn.Race.ToString()},
+                        {"class", spawn.Class.ToString()}
+                    }));
+                
                 PlayerSpawned?.Invoke(this, player);
             }
             else // NPC
@@ -718,22 +822,50 @@ namespace OpenEQ.Netcode.GameClient
                 
                 CurrentZone.AddNPC(npc);
                 _logger.LogDebug("NPC spawned: {NPCName}", npc.Name);
+                
+                // Emit game event for narration engine
+                _packetEventEmitter?.EmitGameEvent(GameEventHelper.CreateSpawnEvent(
+                    spawn.SpawnID.ToString(), 
+                    spawn.Name, 
+                    "entity.npc_spawn", 
+                    CurrentZone.Name, 
+                    spawn.Position.X, 
+                    spawn.Position.Y, 
+                    spawn.Position.Z,
+                    new Dictionary<string, object>
+                    {
+                        {"level", spawn.Level},
+                        {"race", spawn.Race.ToString()},
+                        {"class", spawn.Class.ToString()},
+                        {"body_type", spawn.BodyType.ToString()},
+                        {"size", spawn.Size}
+                    }));
+                
                 NPCSpawned?.Invoke(this, npc);
             }
         }
         
-        private void OnMessageReceived(object? sender, ChannelMessage message)
+        void OnMessageReceived(object? sender, ChannelMessage message)
         {
-            var chatMsg = new ChatMessage
+            var chatMsg = new OpenEQ.Netcode.GameClient.Models.ChatMessage
             {
                 Channel = (ChatChannel)message.ChanNum,
                 From = message.From,
-                To = message.To,
-                Message = message.Message,
+                To = message.To, 
+                Message = message.Message, 
                 Language = message.Language
             };
-            
+
             _logger.LogInformation("Chat: {Message}", chatMsg.ToString());
+
+            // Emit game event for narration engine
+            _packetEventEmitter?.EmitGameEvent(GameEventHelper.CreateChatEvent(
+                "unknown", // We don't have actor ID from chat message
+                chatMsg.From,
+                chatMsg.Channel.ToString(),
+                chatMsg.Message,
+                CurrentZone?.Name ?? "unknown"));
+
             ChatMessageReceived?.Invoke(this, chatMsg);
         }
         
@@ -800,13 +932,142 @@ namespace OpenEQ.Netcode.GameClient
         private void OnZonedReceived(object? sender, object? zone)
         {
             _logger.LogInformation("Zone change detected");
-            // Handle zone transitions
+            
+            // Load navigation mesh for the new zone
+            if (CurrentZone?.Name != null)
+            {
+                _ = Task.Run(() => LoadNavMeshForCurrentZone());
+            }
         }
         
-        private void OnPositionUpdated(object? sender, PlayerPositionUpdate update)
+        private void OnClientUpdated(object? sender, ClientUpdateFromServer update)
         {
+            _logger.LogDebug("ClientUpdate received for SpawnID {SpawnID} - Position: ({X}, {Y}, {Z}) Heading: {Heading}",
+                update.ID, update.Position.X, update.Position.Y, update.Position.Z, update.Position.Heading);
+            // Update movement manager with current position
+            if (update.ID == Character?.SpawnID)
+            {
+                _logger.LogDebug("Updating movement manager with current position");
+                _movementManager?.SetCurrentPosition(update.Position.X, update.Position.Y, update.Position.Z);
+            }                
             // Forward the position update event
-            PositionUpdated?.Invoke(this, update);
+            ClientUpdated?.Invoke(this, update);
         }
+        private void OnMobUpdated(object? sender, MobUpdate update)
+        {
+            _logger.LogDebug("MobUpdate received for SpawnID {SpawnID} - Position: ({X}, {Y}, {Z}) Heading: {Heading}",
+                update.ID, update.Position.X, update.Position.Y, update.Position.Z, update.Position.Heading);
+            // Forward the position update event
+            MobUpdated?.Invoke(this, update);
+        }
+
+        private void OnNPCMoveUpdated(object? sender, NPCMoveUpdate update)
+        {
+            _logger.LogDebug("NPCMoveUpdate received for SpawnID {SpawnID} - Position: ({X}, {Y}, {Z}) Heading: {Heading}",
+                update.ID, update.Position.X, update.Position.Y, update.Position.Z, update.Position.Heading);   
+            // Forward the position update event
+            NPCMoveUpdated?.Invoke(this, update);
+        }
+
+        /// <summary>
+        /// Moves the character to the specified coordinates using pathfinding
+        /// </summary>
+        public async Task<bool> MoveTo(float x, float y, float z)
+        {
+            if (_movementManager == null)
+            {
+                _logger.LogWarning("Cannot move - movement manager not initialized");
+                return false;
+            }
+
+            if (State != ConnectionState.InGame)
+            {
+                _logger.LogWarning("Cannot move - not in game");
+                return false;
+            }
+            _logger.LogDebug("Move to X:{},Y:{},Z:{}", x, y, z);
+            return await _movementManager.MoveTo(x, y, z);
+        }
+
+        /// <summary>
+        /// Stops any current movement
+        /// </summary>
+        public void StopMovement()
+        {
+            _movementManager?.StopMovement();
+        }
+
+        /// <summary>
+        /// Gets or sets the movement speed multiplier (for buffs, debuffs, etc.)
+        /// </summary>
+        public float MovementSpeedMultiplier
+        {
+            get => _movementManager?.Speed.SpeedMultiplier ?? 1.0f;
+            set
+            {
+                if (_movementManager != null)
+                {
+                    _movementManager.Speed.SpeedMultiplier = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets whether the character is currently moving
+        /// </summary>
+        public bool IsMoving => _movementManager?.IsMoving ?? false;
+
+        private async Task LoadNavMeshForCurrentZone()
+        {
+            if (_navigationManager == null || CurrentZone?.Name == null) return;
+
+            _logger.LogInformation("Loading nav mesh for zone: {ZoneName}", CurrentZone.Name);
+            
+            var success = await Task.Run(() => _navigationManager.LoadNavMeshForZone(CurrentZone.Name));
+            
+            if (success)
+            {
+                _logger.LogInformation("Nav mesh loaded successfully for zone: {ZoneName}", CurrentZone.Name);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to load nav mesh for zone: {ZoneName}", CurrentZone.Name);
+            }
+        }
+
+        private void SendPositionToServer(float x, float y, float z, float heading)
+        {
+            try
+            {
+                if (_zoneStream == null || State != ConnectionState.InGame)
+                {
+                    return;
+                }
+
+                _logger.LogDebug("Sending position to server: ({}, {}, {}) Heading: {}", x, y, z, heading);
+
+                // Send position update directly to server via ZoneStream
+                var position = new Tuple<float, float, float, float>(x, y, z, heading);
+                _zoneStream.UpdatePosition(position);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending position to server");
+            }
+        }
+
+        private void OnMovementPositionUpdate(float x, float y, float z, float heading)
+        {
+            try
+            {
+                _logger.LogDebug("GameClient received local movement position update: (X: {}, Y: {}, Z: {}) Heading: {}", x, y, z, heading);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing movement position update");
+            }
+        }
+
+
     }
 }

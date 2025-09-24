@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using EQProtocol.Streams.Common;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;

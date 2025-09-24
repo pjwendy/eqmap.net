@@ -1,0 +1,26 @@
+{
+  "Host": "172.29.179.249",
+  "LoginPort": 5999,
+  "Username": "bifar",
+  "Password": "tea4two",
+  "ServerName": "honeytree",
+  "CharacterName": "bifar",
+  "PositionUpdateIntervalMs": 100,
+  "PatrolPoints": [
+    {
+      "X": -971.29,
+      "Y": 145.91,
+      "Z": 49.29
+    },
+    {
+      "X": -968.20,
+      "Y": 96.21,
+      "Z": 49.29
+    },
+    {
+      "X": -984.55,
+      "Y": 140.25,
+      "Z": 49.29
+    }
+  ]
+}

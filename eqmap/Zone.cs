@@ -26,5 +26,28 @@ namespace eqmap
             // This would need to be implemented in EQGameClient if zone requests are supported
             // For now, zone changes happen through the server
         }
+        
+        public async Task<bool> MoveTo(float x, float y, float z)
+        {
+            if (gameClient == null)
+            {
+                return false;
+            }
+            return await gameClient.MoveTo(x, y, z);
+        }
+        
+        public void MoveTo(double x, double y, double z)
+        {
+            // Synchronous wrapper for Lua convenience (Lua uses doubles)            
+            Task.Run(async () => await MoveTo((float)x, (float)y, (float)z));
+        }
+        
+        public void StopMovement()
+        {
+            if (gameClient != null)
+            {
+                gameClient.StopMovement();
+            }
+        }
     }
 }

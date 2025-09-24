@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>8.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="morelinq" Version="4.3.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="NLog" Version="5.3.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+    <PackageReference Include="ProDotNetZip" Version="1.20.0" />
+    <PackageReference Include="XmlDocMarkdown" Version="2.9.0" />
+    <PackageReference Include="DotRecast.Recast" Version="2024.2.1" />
+    <PackageReference Include="DotRecast.Detour" Version="2024.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- All map files use file system access to allow user customization -->
+    <Content Include="GameClient\Maps\2D\*.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="GameClient\Maps\Nav\*.nav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <!-- .NET SDK automatically includes all .cs files - no need for explicit Compile items -->
+</Project>

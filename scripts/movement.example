@@ -1,0 +1,85 @@
+function Main()
+	log:Info("Starting movement example LUA script")
+	account:Logon("172.29.179.249",5999,"testuser","password","TestServer","TestChar")
+	log:Info("Logon sent")
+end
+
+SetLogonResultHandler(
+	function(success, reason)
+		log:Info(string.format("Logon %s %s", success, reason))
+		if (success) then			
+			-- Wait for zone connection to stabilize
+			chat:Say("Movement bot ready!")
+			log:Info("Connected and ready for movement commands")
+		end
+	end
+)
+
+SetMessageEventHandler(
+	function(message)
+		log:Info(string.format("Chat received: [%s] %s: %s", message.Channel, message.From, message.Message))
+		
+		-- Only respond to tells OR messages that contain the bot's name
+		local shouldRespond = message.IsTell or string.find(string.lower(message.Message), "testchar")
+		
+		if shouldRespond then
+			local lowerMessage = string.lower(message.Message)
+			
+			-- MoveTo command: "moveto x y z" or "go to x y z"
+			if string.find(lowerMessage, "moveto") or string.find(lowerMessage, "go to") then
+				-- Extract coordinates from message
+				local x, y, z = string.match(message.Message, "([%-]?%d+%.?%d*)[%s,]+([%-]?%d+%.?%d*)[%s,]+([%-]?%d+%.?%d*)")
+				
+				if x and y and z then
+					x = tonumber(x)
+					y = tonumber(y) 
+					z = tonumber(z)
+					
+					chat:Say(string.format("Moving to coordinates: %.2f, %.2f, %.2f", x, y, z))
+					log:Info(string.format("MoveTo command received: %.2f, %.2f, %.2f", x, y, z))
+					
+					-- Call the MoveTo method through the zone object
+					zone:MoveTo(x, y, z)
+				else
+					chat:Say("Invalid coordinates format. Use: 'moveto x y z' (e.g., 'moveto 100.5 -200.3 10.0')")
+				end
+			end
+			
+			-- Stop movement command
+			if string.find(lowerMessage, "stop") then
+				chat:Say("Stopping movement")
+				log:Info("Stop movement command received")
+				zone:StopMovement()
+			end
+			
+			-- Get current position command
+			if string.find(lowerMessage, "where") or string.find(lowerMessage, "pos") then
+				chat:Say(string.format("Current zone: %s (ID: %d)", zone.CurrentZoneName, zone.CurrentZoneId))
+				log:Info(string.format("Position request - Zone: %s (ID: %d)", zone.CurrentZoneName, zone.CurrentZoneId))
+			end
+			
+			-- Help command
+			if string.find(lowerMessage, "help") then
+				chat:Say("Movement commands: 'moveto x y z', 'stop', 'where', 'help'")
+				log:Info("Help command processed")
+			end
+		end
+	end
+)
+
+-- Example of automated movement pattern (commented out)
+--[[
+SetSpawnEventHandler(
+	function(spawn)
+		-- Example: Auto-follow a specific player
+		if spawn.Name == "TargetPlayer" then
+			local x = spawn.Position.X / 8.0  -- Convert from EQ coordinates
+			local y = spawn.Position.Y / 8.0
+			local z = spawn.Position.Z / 8.0
+			
+			log:Info(string.format("Following %s to %.2f, %.2f, %.2f", spawn.Name, x, y, z))
+			zone:MoveTo(x, y, z)
+		end
+	end
+)
+--]]

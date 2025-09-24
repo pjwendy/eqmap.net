@@ -1,0 +1,288 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "EQLogs/1.0.0": {
+        "dependencies": {
+          "CommunityToolkit.Mvvm": "8.2.2",
+          "Docker.DotNet": "3.125.15",
+          "EQProtocol": "1.0.0",
+          "NLog": "5.3.4",
+          "Newtonsoft.Json": "13.0.3"
+        },
+        "runtime": {
+          "EQLogs.dll": {}
+        }
+      },
+      "CommunityToolkit.Mvvm/8.2.2": {
+        "runtime": {
+          "lib/net6.0/CommunityToolkit.Mvvm.dll": {
+            "assemblyVersion": "8.2.0.0",
+            "fileVersion": "8.2.2.1"
+          }
+        }
+      },
+      "Docker.DotNet/3.125.15": {
+        "dependencies": {
+          "Newtonsoft.Json": "13.0.3",
+          "System.Buffers": "4.5.1",
+          "System.Threading.Tasks.Extensions": "4.5.4"
+        },
+        "runtime": {
+          "lib/netstandard2.1/Docker.DotNet.dll": {
+            "assemblyVersion": "3.125.0.0",
+            "fileVersion": "3.125.15.1"
+          }
+        }
+      },
+      "DotRecast.Core/2024.2.1": {
+        "runtime": {
+          "lib/net8.0/DotRecast.Core.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "DotRecast.Detour/2024.2.1": {
+        "dependencies": {
+          "DotRecast.Core": "2024.2.1"
+        },
+        "runtime": {
+          "lib/net8.0/DotRecast.Detour.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "DotRecast.Recast/2024.2.1": {
+        "dependencies": {
+          "DotRecast.Core": "2024.2.1"
+        },
+        "runtime": {
+          "lib/net8.0/DotRecast.Recast.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions/8.0.2": {
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.0.1024.46610"
+          }
+        }
+      },
+      "Microsoft.Extensions.Logging.Abstractions/8.0.3": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.2"
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.0.1325.6609"
+          }
+        }
+      },
+      "morelinq/4.3.0": {
+        "runtime": {
+          "lib/net8.0/MoreLinq.dll": {
+            "assemblyVersion": "4.3.0.0",
+            "fileVersion": "4.3.0.0"
+          }
+        }
+      },
+      "Newtonsoft.Json/13.0.3": {
+        "runtime": {
+          "lib/net6.0/Newtonsoft.Json.dll": {
+            "assemblyVersion": "13.0.0.0",
+            "fileVersion": "13.0.3.27908"
+          }
+        }
+      },
+      "NLog/5.3.4": {
+        "runtime": {
+          "lib/netstandard2.0/NLog.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.3.4.2778"
+          }
+        }
+      },
+      "ProDotNetZip/1.20.0": {
+        "dependencies": {
+          "System.Security.Permissions": "8.0.0",
+          "System.Text.Encoding.CodePages": "8.0.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/ProDotNetZip.dll": {
+            "assemblyVersion": "1.20.0.0",
+            "fileVersion": "1.20.0.0"
+          }
+        }
+      },
+      "System.Buffers/4.5.1": {},
+      "System.Security.Permissions/8.0.0": {
+        "dependencies": {
+          "System.Windows.Extensions": "8.0.0"
+        }
+      },
+      "System.Text.Encoding.CodePages/8.0.0": {},
+      "System.Threading.Tasks.Extensions/4.5.4": {},
+      "System.Windows.Extensions/8.0.0": {},
+      "XmlDocMarkdown/2.9.0": {},
+      "EQProtocol/1.0.0": {
+        "dependencies": {
+          "DotRecast.Detour": "2024.2.1",
+          "DotRecast.Recast": "2024.2.1",
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.3",
+          "NLog": "5.3.4",
+          "Newtonsoft.Json": "13.0.3",
+          "ProDotNetZip": "1.20.0",
+          "XmlDocMarkdown": "2.9.0",
+          "morelinq": "4.3.0"
+        },
+        "runtime": {
+          "EQProtocol.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "EQLogs/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "CommunityToolkit.Mvvm/8.2.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-r0g0k9tGYdrnz8R7T3x5UiokDffeevzK/2P/9SBL6fqLgN8B157MIi/bVUWI1KAz6ZorZrK9AdABCWUeXZZsvA==",
+      "path": "communitytoolkit.mvvm/8.2.2",
+      "hashPath": "communitytoolkit.mvvm.8.2.2.nupkg.sha512"
+    },
+    "Docker.DotNet/3.125.15": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XN8FKxVv8Mjmwu104/Hl9lM61pLY675s70gzwSj8KR5pwblo8HfWLcCuinh9kYsqujBkMH4HVRCEcRuU6al4BQ==",
+      "path": "docker.dotnet/3.125.15",
+      "hashPath": "docker.dotnet.3.125.15.nupkg.sha512"
+    },
+    "DotRecast.Core/2024.2.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-0O7j4qJ9fNJlvu5pGfUzy9BtnknqaLXOFkEXqZxUpw/VYY2P55jDv9yKvuuUzpacGmfmWuM86jLEyMvyZvjKIA==",
+      "path": "dotrecast.core/2024.2.1",
+      "hashPath": "dotrecast.core.2024.2.1.nupkg.sha512"
+    },
+    "DotRecast.Detour/2024.2.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-fhP/toQtLPAMIdD7zRshgJrqNUp0GJPjCMTJKaXOW7yS7b2EzuypB9Xj4gOYt7Ek74iefN2CZsMUh6GxfZCp1g==",
+      "path": "dotrecast.detour/2024.2.1",
+      "hashPath": "dotrecast.detour.2024.2.1.nupkg.sha512"
+    },
+    "DotRecast.Recast/2024.2.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-/6h4vkAj8LjFjEADYfI9d07hRARqTZiGw5Ol0TltZLkxczyksLvjsQHmx7J5+2jw7rbu9x4skplfiNh0n7Llpg==",
+      "path": "dotrecast.recast/2024.2.1",
+      "hashPath": "dotrecast.recast.2024.2.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.DependencyInjection.Abstractions/8.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3iE7UF7MQkCv1cxzCahz+Y/guQbTqieyxyaWKhrRO91itI9cOKO76OHeQDahqG4MmW5umr3CcCvGmK92lWNlbg==",
+      "path": "microsoft.extensions.dependencyinjection.abstractions/8.0.2",
+      "hashPath": "microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging.Abstractions/8.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-dL0QGToTxggRLMYY4ZYX5AMwBb+byQBd/5dMiZE07Nv73o6I5Are3C7eQTh7K2+A4ct0PVISSr7TZANbiNb2yQ==",
+      "path": "microsoft.extensions.logging.abstractions/8.0.3",
+      "hashPath": "microsoft.extensions.logging.abstractions.8.0.3.nupkg.sha512"
+    },
+    "morelinq/4.3.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-mQ0CBsO+dgrLOR8jC8NUcuz7ohH1NAbRn3XRrfpVt5PqcK8YLUmDbmIQfUEosQwtI7l41QcIf1xBhkR0w3b72A==",
+      "path": "morelinq/4.3.0",
+      "hashPath": "morelinq.4.3.0.nupkg.sha512"
+    },
+    "Newtonsoft.Json/13.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ==",
+      "path": "newtonsoft.json/13.0.3",
+      "hashPath": "newtonsoft.json.13.0.3.nupkg.sha512"
+    },
+    "NLog/5.3.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-gLy7+O1hEYJXIlcTr1/VWjGXrZTQFZzYNO18IWasD64pNwz0BreV+nHLxWKXWZzERRzoKnsk2XYtwLkTVk7J1A==",
+      "path": "nlog/5.3.4",
+      "hashPath": "nlog.5.3.4.nupkg.sha512"
+    },
+    "ProDotNetZip/1.20.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3UQ+ZARja9UbUhIi21UmFxcPiSOg12HdfQvWvnyMjSfWTWIuWitH4XXOKgV7wk9wHZj0f0olOJYFAK52encGZg==",
+      "path": "prodotnetzip/1.20.0",
+      "hashPath": "prodotnetzip.1.20.0.nupkg.sha512"
+    },
+    "System.Buffers/4.5.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Rw7ijyl1qqRS0YQD/WycNst8hUUMgrMH4FCn1nNm27M4VxchZ1js3fVjQaANHO5f3sN4isvP4a+Met9Y4YomAg==",
+      "path": "system.buffers/4.5.1",
+      "hashPath": "system.buffers.4.5.1.nupkg.sha512"
+    },
+    "System.Security.Permissions/8.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-v/BBylw7XevuAsHXoX9dDUUfmBIcUf7Lkz8K3ZXIKz3YRKpw8YftpSir4n4e/jDTKFoaK37AsC3xnk+GNFI1Ow==",
+      "path": "system.security.permissions/8.0.0",
+      "hashPath": "system.security.permissions.8.0.0.nupkg.sha512"
+    },
+    "System.Text.Encoding.CodePages/8.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-OZIsVplFGaVY90G2SbpgU7EnCoOO5pw1t4ic21dBF3/1omrJFpAGoNAVpPyMVOC90/hvgkGG3VFqR13YgZMQfg==",
+      "path": "system.text.encoding.codepages/8.0.0",
+      "hashPath": "system.text.encoding.codepages.8.0.0.nupkg.sha512"
+    },
+    "System.Threading.Tasks.Extensions/4.5.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zteT+G8xuGu6mS+mzDzYXbzS7rd3K6Fjb9RiZlYlJPam2/hU7JCBZBVEcywNuR+oZ1ncTvc/cq0faRr3P01OVg==",
+      "path": "system.threading.tasks.extensions/4.5.4",
+      "hashPath": "system.threading.tasks.extensions.4.5.4.nupkg.sha512"
+    },
+    "System.Windows.Extensions/8.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Obg3a90MkOw9mYKxrardLpY2u0axDMrSmy4JCdq2cYbelM2cUwmUir5Bomvd1yxmPL9h5LVHU1tuKBZpUjfASg==",
+      "path": "system.windows.extensions/8.0.0",
+      "hashPath": "system.windows.extensions.8.0.0.nupkg.sha512"
+    },
+    "XmlDocMarkdown/2.9.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-e7eKa2Z+yOfK8hjv4L3JOSsbBVpImCbWUUQn82QofLVNcziZFbo1cTFckmKbLGEjUkZTZ4oYdeCj0bJeJhRDCw==",
+      "path": "xmldocmarkdown/2.9.0",
+      "hashPath": "xmldocmarkdown.2.9.0.nupkg.sha512"
+    },
+    "EQProtocol/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

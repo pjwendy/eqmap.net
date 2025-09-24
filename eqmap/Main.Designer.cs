@@ -30,6 +30,7 @@ namespace eqmap
         {
             this.panelBottomMainScreen = new System.Windows.Forms.Panel();
             this.labelMapCoordinates = new System.Windows.Forms.Label();
+            this.labelLogStatus = new System.Windows.Forms.Label();
             this.panelLeftMainScreen = new System.Windows.Forms.Panel();
             this.tabControlMainPageLeft = new System.Windows.Forms.TabControl();
             this.tabPageFirstMainPageLeft = new System.Windows.Forms.TabPage();
@@ -48,10 +49,12 @@ namespace eqmap
             this.panelRightMainScreen.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
-            // 
+            //
             // panelBottomMainScreen
-            // 
+            //
             this.panelBottomMainScreen.BackColor = System.Drawing.SystemColors.Control;
+            this.panelBottomMainScreen.Controls.Add(this.labelMapCoordinates);
+            this.panelBottomMainScreen.Controls.Add(this.labelLogStatus);
             this.panelBottomMainScreen.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panelBottomMainScreen.Location = new System.Drawing.Point(0, 730);
             this.panelBottomMainScreen.Name = "panelBottomMainScreen";
@@ -68,7 +71,20 @@ namespace eqmap
             this.labelMapCoordinates.TabIndex = 0;
             this.labelMapCoordinates.Text = "Co-ordinates";
             this.labelMapCoordinates.Visible = false;
-            // 
+            //
+            // labelLogStatus
+            //
+            this.labelLogStatus.AutoSize = true;
+            this.labelLogStatus.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.labelLogStatus.Location = new System.Drawing.Point(200, 6);
+            this.labelLogStatus.Name = "labelLogStatus";
+            this.labelLogStatus.Size = new System.Drawing.Size(400, 15);
+            this.labelLogStatus.TabIndex = 1;
+            this.labelLogStatus.Text = "Logs: Initializing... (Click to open logs folder)";
+            this.labelLogStatus.Visible = true;
+            this.labelLogStatus.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.labelLogStatus.Click += new System.EventHandler(this.labelLogStatus_Click);
+            //
             // panelLeftMainScreen
             // 
             this.panelLeftMainScreen.Controls.Add(this.tabControlMainPageLeft);
@@ -197,6 +213,7 @@ namespace eqmap
 
         private System.Windows.Forms.Panel panelBottomMainScreen;
         private System.Windows.Forms.Label labelMapCoordinates;
+        private System.Windows.Forms.Label labelLogStatus;
         private System.Windows.Forms.Panel panelLeftMainScreen;
         private System.Windows.Forms.TabControl tabControlMainPageLeft;
         private System.Windows.Forms.TabPage tabPageFirstMainPageLeft;
