@@ -9,7 +9,7 @@ EQMap.NET is a suite of tools designed for EverQuest private server development 
 ## 🎥 Demo Videos
 
 - **[EQMap Real-time Mapping Demo](https://www.youtube.com/watch?v=eosSt0Vvpjk)** - See the real-time mapping functionality in action
-- **[Packet Analysis and Protocol Debugging](https://www.youtube.com/watch?v=-uP2zkLXSPw)** - Deep dive into packet analysis capabilities
+- **[BOT appears in Client](https://www.youtube.com/watch?v=-uP2zkLXSPw)** - See a LUA bot appear in the client
 
 ## 🚀 Key Features
 
