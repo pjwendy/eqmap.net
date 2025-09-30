@@ -17,7 +17,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Check if XML documentation was generated
-$xmlDocPath = "EQProtocol/bin/Release/netstandard2.0/EQProtocol.xml"
+$xmlDocPath = "EQProtocol/bin/Release/netstandard2.1/EQProtocol.xml"
 if (-not (Test-Path $xmlDocPath)) {
     Write-Error "XML documentation file not found at: $xmlDocPath"
     exit 1
@@ -36,7 +36,7 @@ dotnet tool restore
 
 # Generate markdown documentation (if dependencies can be resolved)
 Write-Host "Attempting to generate markdown documentation..."
-$dllPath = "bin/Release/netstandard2.0/EQProtocol.dll"
+$dllPath = "bin/Release/netstandard2.1/EQProtocol.dll"
 $outputPath = "../docs/api"
 
 # Try to generate documentation, but continue if it fails

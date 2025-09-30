@@ -238,23 +238,50 @@ using static OpenEQ.Netcode.Utility;
 namespace OpenEQ.Netcode {
     /// <summary>
     /// Represents the ClientUpdate packet structure for EverQuest network communication.
+    /// This packet is sent from the server to update a client about another player's/NPC's position and movement.
     /// </summary>
     public struct ClientUpdateFromServer : IEQStruct
     {
+        /// <summary>
+        /// Packet sequence number for ordering and duplicate detection
+        /// </summary>
         public uint Sequence;
+
+        /// <summary>
+        /// The spawn ID of the entity being updated (player or NPC)
+        /// </summary>
         public ushort ID;
+
+        /// <summary>
+        /// The position and movement data for the entity
+        /// </summary>
         public UpdatePositionFromServer Position;
 
+        /// <summary>
+        /// Initializes a new ClientUpdateFromServer with the specified ID and position data.
+        /// </summary>
+        /// <param name="ID">The spawn ID of the entity</param>
+        /// <param name="Position">The position and movement data</param>
         public ClientUpdateFromServer(ushort ID, UpdatePositionFromServer Position) : this()
         {
             this.ID = ID;
             this.Position = Position;
         }
 
+        /// <summary>
+        /// Initializes a new ClientUpdateFromServer by unpacking data from a byte array.
+        /// </summary>
+        /// <param name="data">The binary data to unpack</param>
+        /// <param name="offset">The offset in the data array to start unpacking from</param>
         public ClientUpdateFromServer(byte[] data, int offset = 0) : this()
         {
             Unpack(data, offset);
         }
+
+        /// <summary>
+        /// Initializes a new ClientUpdateFromServer by unpacking data from a BinaryReader.
+        /// </summary>
+        /// <param name="br">The BinaryReader to read data from</param>
         public ClientUpdateFromServer(BinaryReader br) : this()
         {
             Unpack(br);
@@ -316,16 +343,55 @@ namespace OpenEQ.Netcode {
             return ret + "}";
         }
     }
+    /// <summary>
+    /// Represents position and movement data for entities in EverQuest.
+    /// Contains absolute position coordinates and delta (movement) values for smooth interpolation.
+    /// </summary>
     public struct UpdatePositionFromServer : IEQStruct
     {
+        /// <summary>
+        /// Change in X coordinate since last update (for smooth movement interpolation)
+        /// </summary>
         public float DeltaX;
+
+        /// <summary>
+        /// Change in heading direction since last update
+        /// </summary>
         public short DeltaHeading;
+
+        /// <summary>
+        /// Change in Y coordinate since last update (for smooth movement interpolation)
+        /// </summary>
         public float DeltaY;
+
+        /// <summary>
+        /// Current Y coordinate (north-south position)
+        /// </summary>
         public float Y;
+
+        /// <summary>
+        /// Current animation state/type being performed
+        /// </summary>
         public short Animation;
+
+        /// <summary>
+        /// Current heading direction (0-4095, representing 0-360 degrees)
+        /// </summary>
         public ushort Heading;
+
+        /// <summary>
+        /// Current X coordinate (east-west position)
+        /// </summary>
         public float X;
+
+        /// <summary>
+        /// Current Z coordinate (vertical position/height)
+        /// </summary>
         public float Z;
+
+        /// <summary>
+        /// Change in Z coordinate since last update (for smooth movement interpolation)
+        /// </summary>
         public float DeltaZ;
 
         public UpdatePositionFromServer(float DeltaX, short DeltaHeading, float DeltaY, float Y, short Animation, ushort Heading, float X, float Z, float DeltaZ) : this()

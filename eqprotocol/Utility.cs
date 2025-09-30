@@ -8,9 +8,18 @@ using System.Text;
 using static System.Console;
 
 namespace OpenEQ.Netcode {
+    /// <summary>
+    /// Provides utility methods for debugging, data formatting, and protocol operations in EverQuest networking.
+    /// </summary>
     public static class Utility {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         const string printable = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-=_+{}[];':\" |\\<>?,./`~!@#$%^&*()1234567890";
+
+        /// <summary>
+        /// Outputs a formatted hexadecimal dump of a packet to the debug log.
+        /// Includes opcode information and formatted hex/ASCII output.
+        /// </summary>
+        /// <param name="packet">The packet to dump</param>
         public static void Hexdump(AppPacket packet) {
             lock (printable)
             {
@@ -20,6 +29,11 @@ namespace OpenEQ.Netcode {
                 Logger.Debug($"engine:{sb.ToString()}");
             }
         }
+        /// <summary>
+        /// Outputs a formatted hexadecimal dump of raw data to the debug log.
+        /// Provides hex and ASCII representation for debugging binary data.
+        /// </summary>
+        /// <param name="data">The byte array to dump</param>
         public static void Hexdump(byte[] data) {
             lock(printable) {
                 StringBuilder sb = new StringBuilder();
@@ -28,8 +42,12 @@ namespace OpenEQ.Netcode {
                 Logger.Debug($"engine:{sb.ToString()}");
             }
         }
-        
-        // New server-log style hex dump
+
+        /// <summary>
+        /// Outputs a formatted hexadecimal dump in server log style.
+        /// Matches the formatting used by EQEmu server logs for consistency.
+        /// </summary>
+        /// <param name="data">The byte array to dump</param>
         public static void HexdumpServerStyle(byte[] data) {
             lock(printable) {
                 StringBuilder sb = new StringBuilder();

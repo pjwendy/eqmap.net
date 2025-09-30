@@ -6,33 +6,82 @@ using OpenEQ.Netcode;
 
 namespace EQProtocol.Streams.Common
 {
+    /// <summary>
+    /// Abstract base class for EverQuest network streams that handles reliable UDP communication.
+    /// Provides packet sequencing, acknowledgment, compression, validation, and event emission capabilities.
+    /// </summary>
     public abstract class EQStream
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
+        /// <summary>
+        /// Enables debug logging for this stream
+        /// </summary>
         public bool Debug = false;
+
+        /// <summary>
+        /// Gets or sets the packet event emitter for logging and debugging
+        /// </summary>
         protected IPacketEventEmitter? PacketEmitter { get; set; }
 
+        /// <summary>
+        /// Gets the opcode name for logging purposes. Override in derived classes for better opcode names.
+        /// </summary>
+        /// <param name="opcode">The opcode to get the name for</param>
+        /// <returns>A string representation of the opcode for logging</returns>
         protected virtual string GetOpcodeNameForLogging(ushort opcode)
         {
             return $"0x{opcode:X04}";
         }
 
-        public bool Compressing, Validating;
+        /// <summary>
+        /// Indicates whether compression is enabled for this stream
+        /// </summary>
+        public bool Compressing;
+
+        /// <summary>
+        /// Indicates whether CRC validation is enabled for this stream
+        /// </summary>
+        public bool Validating;
+
+        /// <summary>
+        /// The CRC key used for packet validation
+        /// </summary>
         public byte[] CRCKey;
-        public ushort OutSequence, InSequence;
 
+        /// <summary>
+        /// The outgoing packet sequence number
+        /// </summary>
+        public ushort OutSequence;
+
+        /// <summary>
+        /// The incoming packet sequence number
+        /// </summary>
+        public ushort InSequence;
+
+        /// <summary>
+        /// Indicates whether keep-alive packets should be sent periodically
+        /// </summary>
         public bool SendKeepalives = false;
-        float lastRecvSendTime;
 
+        float lastRecvSendTime;
         AsyncUDPConnection conn;
         uint sessionID;
-
         ushort lastAckRecieved, lastAckSent;
         bool resendAck;
         Packet[] sentPackets, futurePackets;
 
+        /// <summary>
+        /// Indicates whether the stream is in the process of disconnecting
+        /// </summary>
         public bool Disconnecting;
 
+        /// <summary>
+        /// Initializes a new EQStream with the specified host and port.
+        /// Starts background tasks for packet checking and receiving.
+        /// </summary>
+        /// <param name="host">The hostname or IP address to connect to</param>
+        /// <param name="port">The port number to connect to</param>
         public EQStream(string host, int port)
         {
             conn = new AsyncUDPConnection(host, port);
@@ -40,7 +89,11 @@ namespace EQProtocol.Streams.Common
             AsyncHelper.Run(CheckerAsync, longRunning: true);
             AsyncHelper.Run(ReceiverAsync, longRunning: true);
         }
-        
+
+        /// <summary>
+        /// Sets the packet event emitter for this stream, used for logging and debugging packets.
+        /// </summary>
+        /// <param name="emitter">The packet event emitter to use, or null to disable packet events</param>
         public void SetPacketEmitter(IPacketEventEmitter? emitter)
         {
             PacketEmitter = emitter;

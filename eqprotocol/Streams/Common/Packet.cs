@@ -6,18 +6,54 @@ using OpenEQ.Netcode;
 using static OpenEQ.Netcode.Utility;
 
 namespace EQProtocol.Streams.Common {
+    /// <summary>
+    /// Represents a network packet used in EverQuest protocol communication.
+    /// Handles packet parsing, compression, encryption, and sequencing for reliable network transmission.
+    /// </summary>
     public class Packet {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
+        /// <summary>
+        /// Indicates whether this is a bare packet (without session protocol wrapper)
+        /// </summary>
         public bool Bare;
+
+        /// <summary>
+        /// The packet opcode identifying the packet type
+        /// </summary>
         public ushort Opcode;
+
+        /// <summary>
+        /// The raw packet data payload
+        /// </summary>
         public byte[] Data;
+
+        /// <summary>
+        /// Indicates whether this packet has been acknowledged by the recipient
+        /// </summary>
         public bool Acked = false;
+
+        /// <summary>
+        /// Timestamp when the packet was sent (for timeout/retry logic)
+        /// </summary>
         public float SentTime;
+
+        /// <summary>
+        /// Indicates whether the packet passed validation checks (CRC, etc.)
+        /// </summary>
         public bool Valid = true;
+
+        /// <summary>
+        /// The complete packet data as sent over the network (including headers)
+        /// </summary>
         public byte[] Baked;
+
         bool sequenced;
         ushort sequence;
 
+        /// <summary>
+        /// Gets or sets the sequence number for this packet (used for reliable delivery)
+        /// </summary>
         public ushort Sequence {
             get { return sequence; }
             set {
@@ -26,14 +62,33 @@ namespace EQProtocol.Streams.Common {
             }
         }
 
+        /// <summary>
+        /// Initializes a new packet with the specified opcode and data.
+        /// </summary>
+        /// <param name="opcode">The packet opcode</param>
+        /// <param name="data">The packet data payload</param>
+        /// <param name="bare">Whether this is a bare packet without session protocol wrapper</param>
         public Packet(ushort opcode, byte[] data, bool bare = false) {
             Bare = bare;
             Opcode = opcode;
             Data = data;
         }
 
+        /// <summary>
+        /// Initializes a new packet with the specified session operation and data.
+        /// </summary>
+        /// <param name="opcode">The session operation type</param>
+        /// <param name="data">The packet data payload</param>
+        /// <param name="bare">Whether this is a bare packet without session protocol wrapper</param>
         public Packet(SessionOp opcode, byte[] data, bool bare = false) : this((ushort) opcode, data, bare) { }
 
+        /// <summary>
+        /// Initializes a new packet by parsing raw network data from an EQStream.
+        /// Handles decompression, CRC validation, sequence extraction, and protocol parsing.
+        /// </summary>
+        /// <param name="stream">The EQStream containing session configuration (compression, validation, etc.)</param>
+        /// <param name="packet">The raw packet data received from the network</param>
+        /// <param name="combined">Whether this packet is part of a combined packet sequence</param>
         public Packet(EQStream stream, byte[] packet, bool combined = false) {
             Baked = packet;
 
