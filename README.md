@@ -1,10 +1,10 @@
-# EQMap.NET - EverQuest headless BOTS
+# EQMap.NET - EverQuest Protocol Encapsulation for Headless BOTS and alternative clients
 
-A comprehensive toolkit for EverQuest client side headless bots, featuring real-time mapping, packet analysis, and protocol debugging tools.
+A comprehensive toolkit for EverQuest client side protocol handling ideal for headless bots and alternative clients, featuring real-time mapping, packet analysis, and protocol debugging tools.
 
 ## 🎮 What is EQMap.NET?
 
-EQMap.NET is a suite of tools designed for EverQuest client side headless bots. It provides real-time visualization of game data, comprehensive packet analysis, and debugging capabilities for EQEmu server.
+EQMap.NET is a suite of tools designed for EverQuest client side headless bots and alternative clients. It provides real-time visualization of game data, comprehensive packet analysis, and debugging capabilities for EQEmu server.
 
 ## 🎥 Demo Videos
 
