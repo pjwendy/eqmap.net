@@ -11,6 +11,12 @@ namespace EQLogs.Services
 {
     public class PacketParserService
     {
+        private readonly GenericPacketParserService _genericParser;
+
+        public PacketParserService()
+        {
+            _genericParser = new GenericPacketParserService();
+        }
         public List<PacketData> ParseLogContent(string logContent)
         {
             var packets = new List<PacketData>();
@@ -99,54 +105,8 @@ namespace EQLogs.Services
         
         private string ParseStructureData(PacketData packet)
         {
-            if (string.IsNullOrEmpty(packet.HexDump))
-                return "No hex data available";
-                
-            try
-            {
-                // Try to parse the packet using EQProtocol structures
-                var hexData = ExtractHexBytes(packet.HexDump);
-                if (hexData.Length == 0)
-                    return "No valid hex data found";
-                
-                var sb = new StringBuilder();
-                sb.AppendLine($"Packet: {packet.OpcodeName} ({packet.OpcodeHex})");
-                sb.AppendLine($"Size: {packet.Size} bytes");
-                sb.AppendLine($"Direction: {packet.Direction}");
-                sb.AppendLine();
-                
-                // Attempt to decode known packet structures
-                if (TryDecodeKnownPacket(packet.OpcodeName, hexData, sb, packet.Direction))
-                {
-                    return sb.ToString();
-                }
-                
-                // Enhanced generic packet analysis
-                sb.AppendLine($"Unknown packet structure for {packet.OpcodeName}:");
-                sb.AppendLine();
-                
-                // Analyze packet content
-                AnalyzePacketStructure(hexData, sb);
-                
-                sb.AppendLine();
-                sb.AppendLine("Raw hex data (first 128 bytes):");
-                for (int i = 0; i < Math.Min(hexData.Length, 128); i += 16)
-                {
-                    var chunk = hexData.Skip(i).Take(16).ToArray();
-                    var hex = string.Join(" ", chunk.Select(b => b.ToString("X2")));
-                    var ascii = string.Join("", chunk.Select(b => b >= 32 && b < 127 ? (char)b : '.'));
-                    sb.AppendLine($"  {i:X4}: {hex.PadRight(47)} | {ascii}");
-                }
-                
-                if (hexData.Length > 128)
-                    sb.AppendLine($"  ... ({hexData.Length - 128} more bytes)");
-                
-                return sb.ToString();
-            }
-            catch (Exception ex)
-            {
-                return $"Error parsing packet structure: {ex.Message}";
-            }
+            // Use the new generic parser as the primary method
+            return _genericParser.ParsePacketStructure(packet);
         }
 
         // TODO: Cater for NPC Movements and check Mob Movements

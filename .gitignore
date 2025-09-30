@@ -5,7 +5,6 @@
 /packages/
 credentials.json
 /settings.json
-/claude
 /.claude
 /scripts/*.lua
 /nul

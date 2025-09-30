@@ -28,11 +28,12 @@ namespace eqmap
         }        
         private Account account;
         private Log log;
-        private Lua lua;
+        private LuaManager luaManager;
         private Chat chat;
         private Zone zone;
         private EQGameClient gameClient;
         private PlayerProfile player;
+        private uint? playerSpawnId = null; // Track the player's spawn ID
         private Map map = new Map();
         private Dictionary<string, string> zones = new Dictionary<string, string>();
         private ConcurrentDictionary<uint, ZoneEntry> spawns = new ConcurrentDictionary<uint, ZoneEntry>();
@@ -45,17 +46,19 @@ namespace eqmap
 
             map.pb = pictureBox1;
 
-            lua = new Lua();
+            // Initialize Lua Manager and objects
+            luaManager = new LuaManager();
             account = new Account();
             log = new Log(this);
             chat = null;  // Will be initialized when game client connects
             account.OnLogon += Account_OnLogon;
-            lua["account"] = account;
-            lua["log"] = log;
-            lua["chat"] = chat;
-            lua.RegisterFunction("SetLogonResultHandler", this, GetType().GetMethod("SetLogonResultHandler"));
-            lua.RegisterFunction("SetMessageEventHandler", this, GetType().GetMethod("SetMessageEventHandler"));
-            lua.RegisterFunction("SetSpawnEventHandler", this, GetType().GetMethod("SetSpawnEventHandler"));
+
+            // Register objects with Lua Manager
+            luaManager.RegisterObjects(
+                ("account", account),
+                ("log", log),
+                ("chat", chat)
+            );
 
             this.buttonZone.Click += Button1_Click;
             this.FormClosing += Form1_FormClosing;
@@ -303,8 +306,7 @@ namespace eqmap
                 try
                 {
                     Info($"Loading {files[0]}");
-                    lua.DoFile(files[0]);
-                    lua.DoString("return Main()");
+                    luaManager.ExecuteMainFunction(files[0]);
                 }
                 catch (Exception ex)
                 {
@@ -395,11 +397,15 @@ namespace eqmap
                 // Update chat and zone with game client
                 chat = new Chat(account, gameClient);
                 zone = new Zone(gameClient);
-                
+
                 // Force initial refresh to show status
                 BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
-                lua["chat"] = chat;
-                lua["zone"] = zone;
+
+                // Update Lua Manager with new objects
+                luaManager.RegisterObjects(
+                    ("chat", chat),
+                    ("zone", zone)
+                );
                 
                 // Enable UI elements
                 BeginInvoke((Action)delegate { buttonZone.Enabled = true; });
@@ -434,7 +440,18 @@ namespace eqmap
         private void OnPlayerSpawned(object sender, Player player)
         {
             Info($"Player spawned: {player.Name} at X:{player.X} Y:{player.Y}");
-            
+
+            // Check if this is our own character
+            bool isOurCharacter = string.Equals(player.Name, account.Character, StringComparison.OrdinalIgnoreCase);
+            if (isOurCharacter)
+            {
+                playerSpawnId = player.SpawnID;
+                Info($"Our character detected: {player.Name} (ID: {player.SpawnID})");
+
+                // Update zone with our position
+                zone?.UpdatePlayerPosition(player.X, player.Y, player.Z, player.Name);
+            }
+
             // Convert Player to Spawn for compatibility
             var spawn = new ZoneEntry
             {
@@ -449,7 +466,7 @@ namespace eqmap
                     Heading = (ushort)player.Heading
                 }
             };
-            
+
             spawns.TryAdd(player.SpawnID, spawn);
             Info($"Added player spawn to map. Total spawns: {spawns.Count}");
             BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
@@ -499,6 +516,13 @@ namespace eqmap
 
         private void OnClientUpdated(object sender, ClientUpdateFromServer update)
         {
+            // Check if this is our own character's position update
+            if (playerSpawnId.HasValue && update.ID == playerSpawnId.Value)
+            {
+                zone?.UpdatePlayerPosition(update.Position.X, update.Position.Y, update.Position.Z);
+                Info($"Our position updated: ({update.Position.X:F1}, {update.Position.Y:F1}, {update.Position.Z:F1})");
+            }
+
             // Update the position of the spawn if it exists
             if (spawns.TryGetValue(update.ID, out ZoneEntry spawn))
             {
@@ -510,12 +534,12 @@ namespace eqmap
                     Z = (int)update.Position.Z,
                     Heading = (ushort)update.Position.Heading
                 };
-                
+
                 // Put the updated spawn back in the dictionary
                 spawns[update.ID] = spawn;
-                
+
                 Info($"Position updated for spawn {update.ID}: ({spawn.Position.X:F1}, {spawn.Position.Y:F1})");
-                
+
                 // Refresh the map to show the new position
                 BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
             }
@@ -528,6 +552,13 @@ namespace eqmap
 
         private void OnMobUpdated(object sender, MobUpdate update)
         {
+            // Check if this is our own character's position update (sometimes player updates come as mob updates)
+            if (playerSpawnId.HasValue && update.ID == playerSpawnId.Value)
+            {
+                zone?.UpdatePlayerPosition(update.Position.X, update.Position.Y, update.Position.Z);
+                Info($"Our position updated via MobUpdate: ({update.Position.X:F1}, {update.Position.Y:F1}, {update.Position.Z:F1})");
+            }
+
             // Update the position of the spawn if it exists
             if (spawns.TryGetValue(update.ID, out ZoneEntry spawn))
             {
@@ -588,12 +619,16 @@ namespace eqmap
         {
             Info($"Zone changed to: {zone.Name} ({zone.ZoneID})");
             spawns.Clear();
+            playerSpawnId = null; // Reset player spawn ID for new zone
             MapReady = false;
-            
+
+            // Reset zone position info
+            this.zone?.UpdatePlayerPosition(0, 0, 0, account.Character);
+
             // Update player from game client
             UpdateCharacterFromGameClient();
             loadMap();
-            
+
             BeginInvoke((Action)delegate { pictureBox1.Refresh(); });
         }
 
@@ -690,10 +725,13 @@ namespace eqmap
                     gameClient.Disconnect();
                     gameClient.Dispose();
                 }
+
+                // Dispose LuaManager
+                luaManager?.Dispose();
             }
             catch (Exception)
             {
-            }                 
+            }
         }
         #endregion
 
@@ -755,46 +793,35 @@ namespace eqmap
             Application.DoEvents();
         }
 
-        public delegate void LogonResultEventHandler(bool success, string reason);
-
-        private LogonResultEventHandler _LogonResultEventHandler;
-        
-        public void SetLogonResultHandler(LogonResultEventHandler eventHandler)
+        // Event handler methods now delegate to LuaManager
+        public void SetLogonResultHandler(LuaManager.LogonResultEventHandler eventHandler)
         {
-            _LogonResultEventHandler = eventHandler;
+            luaManager.SetLogonResultHandler(eventHandler);
         }
 
         public void CallLogonResult(bool success, string reason)
         {
-            _LogonResultEventHandler?.Invoke(success, reason);
+            luaManager.CallLogonResult(success, reason);
         }
 
-        public delegate void SpawnEventHandler(object mob);
-
-        private SpawnEventHandler _SpawnEventHandler;
-
-        public void SetSpawnEventHandler(SpawnEventHandler eventHandler)
+        public void SetSpawnEventHandler(LuaManager.SpawnEventHandler eventHandler)
         {
-            _SpawnEventHandler = eventHandler;
+            luaManager.SetSpawnEventHandler(eventHandler);
         }
 
         public void CallSpawnEvent(object mob)
         {
-            _SpawnEventHandler?.Invoke(mob);
+            luaManager.CallSpawnEvent(mob);
         }
 
-        public delegate void MessageEventHandler(object mob);
-
-        private MessageEventHandler _MessageEventHandler;
-
-        public void SetMessageEventHandler(MessageEventHandler eventHandler)
+        public void SetMessageEventHandler(LuaManager.MessageEventHandler eventHandler)
         {
-            _MessageEventHandler = eventHandler;
+            luaManager.SetMessageEventHandler(eventHandler);
         }
 
         public void CallMessageEvent(ChannelMessage message)
         {
-            _MessageEventHandler?.Invoke(message);
+            luaManager.CallMessageEvent(message);
         }
 
         #region Internal Classes
@@ -902,14 +929,14 @@ namespace eqmap
         {
             public PictureBox pb;
             public string zone = string.Empty;
-            public int maxX = 0;
-            public int maxY = 0;
-            public int minX = 0;
-            public int minY = 0;
+            public float maxX = 0;
+            public float maxY = 0;
+            public float minX = 0;
+            public float minY = 0;
             public float zoom = 1f;
             public List<Line> lines = new List<Line>();
-            public int adjustedX(int x) { return Convert.ToInt32(x + (minX > 0 ? minX : -minX) * zoom); }
-            public int adjustedY(int y) { return Convert.ToInt32(y + (minY > 0 ? minY : -minY) * zoom); }            
+            public int adjustedX(float x) { return Convert.ToInt32(x + (minX > 0 ? minX : -minX) * zoom); }
+            public int adjustedY(float y) { return Convert.ToInt32(y + (minY > 0 ? minY : -minY) * zoom); }            
         }
         #endregion
 

@@ -597,17 +597,17 @@ namespace OpenEQ.Netcode {
     }
     public struct SpawnPosition : IEQStruct
     {
-        public short DeltaX;
+        public float DeltaX;
         public short DeltaHeading;
-        public short DeltaY;
-        public int Y;
+        public float DeltaY;
+        public float Y;
         public short Animation;
         public ushort Heading;
-        public int X;
-        public int Z;
-        public short DeltaZ;
+        public float X;
+        public float Z;
+        public float DeltaZ;
 
-        public SpawnPosition(short DeltaX, short DeltaHeading, short DeltaY, int Y, short Animation, ushort Heading, int X, int Z, short DeltaZ) : this()
+        public SpawnPosition(float DeltaX, short DeltaHeading, short DeltaY, float Y, short Animation, ushort Heading, float X, float Z, float DeltaZ) : this()
         {
             this.DeltaX = DeltaX;
             this.DeltaHeading = DeltaHeading;
@@ -653,6 +653,12 @@ namespace OpenEQ.Netcode {
             _databuf = br.ReadUInt32();
             Z = ((int)(_databuf & 0x7FFFF) ^ 0x40000) - 0x40000;
             DeltaZ = (short)(((int)(_databuf >> 19 & 0x1FFF) ^ 0x1000) - 0x1000);
+		    //Y = Y / 8;
+			//X = X / 8;
+			//Z = Z / 8;
+			//DeltaY = DeltaY / 8;
+			//DeltaX = DeltaX / 8;	
+			//DeltaZ = DeltaZ / 8;
         }
 
         public byte[] Pack()

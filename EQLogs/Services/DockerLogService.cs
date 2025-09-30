@@ -6,11 +6,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EQLogs.Services
 {
-    public class DockerLogService
+    public class DockerLogService : IDockerLogService
     {
         private readonly DockerClient _dockerClient;
         private const string CONTAINER_NAME = "honeytree-eqemu-server-1";
@@ -21,6 +22,17 @@ namespace EQLogs.Services
             _dockerClient = new DockerClientConfiguration().CreateClient();
         }
         
+        public async Task<List<LogFileInfo>> GetLogFilesAsync()
+        {
+            var logFiles = await GetAvailableLogFilesAsync();
+            return logFiles.Select(lf => new LogFileInfo
+            {
+                FilePath = lf.Path,
+                TotalSize = lf.Size,
+                EstimatedPacketCount = (int)(lf.Size / 200) // Rough estimate
+            }).ToList();
+        }
+
         public async Task<List<LogFile>> GetAvailableLogFilesAsync()
         {
             var logFiles = new List<LogFile>();
@@ -164,6 +176,49 @@ namespace EQLogs.Services
             return output.ToString();
         }
         
+        // New methods for chunked reading
+        public async Task<string> ExecuteCommandAsync(string command, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var containers = await _dockerClient.Containers.ListContainersAsync(new ContainersListParameters
+                {
+                    All = true
+                });
+
+                var container = containers.FirstOrDefault(c => c.Names.Any(name => name.Contains(CONTAINER_NAME)));
+                if (container == null)
+                {
+                    throw new InvalidOperationException($"Container {CONTAINER_NAME} not found");
+                }
+
+                // Split command into parts
+                var commandParts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                var execConfig = new ContainerExecCreateParameters
+                {
+                    Cmd = commandParts,
+                    AttachStdout = true,
+                    AttachStderr = true
+                };
+
+                var execCreateResponse = await _dockerClient.Exec.ExecCreateContainerAsync(container.ID, execConfig);
+                var execStartResponse = await _dockerClient.Exec.StartAndAttachContainerExecAsync(execCreateResponse.ID, false);
+
+                return await ReadStreamAsync(execStartResponse);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to execute command '{command}': {ex.Message}", ex);
+            }
+        }
+
+        public async Task<string> ReadFileRangeAsync(string filePath, long offset, int length, CancellationToken cancellationToken = default)
+        {
+            var command = $"dd if=\"{filePath}\" bs=1 skip={offset} count={length} 2>/dev/null";
+            return await ExecuteCommandAsync(command, cancellationToken);
+        }
+
         public void Dispose()
         {
             _dockerClient?.Dispose();

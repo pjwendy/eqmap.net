@@ -242,7 +242,7 @@ namespace OpenEQ.Netcode {
     {
         public uint Sequence;
         public ushort ID;
-        public ushort Vehicle;
+        public ushort Vehicle;        
         public UpdatePositionToServer Position;
 
         public ClientUpdateToServer(uint Sequence, ushort ID, ushort Vehicle, UpdatePositionToServer Position) : this()
@@ -294,6 +294,9 @@ namespace OpenEQ.Netcode {
         public void Pack(BinaryWriter bw)
         {
             bw.Write(ID);
+            bw.Write(Sequence);
+            bw.Write(Vehicle);
+            bw.Write((uint)0); // unknown0004[4]
             Position.Pack(bw);
         }
 
@@ -342,17 +345,51 @@ namespace OpenEQ.Netcode {
 
     public struct UpdatePositionToServer : IEQStruct
     {
-        public short DeltaX;
+        public float DeltaX;
         public short DeltaHeading;
-        public short DeltaY;
-        public int Y;
+        public float DeltaY;
+        public float Y;
         public short Animation;
         public ushort Heading;
-        public int X;
-        public int Z;
-        public short DeltaZ;
+        public float X;
+        public float Z;
+        public float DeltaZ;
 
-        public UpdatePositionToServer(short DeltaX, short DeltaHeading, short DeltaY, int Y, short Animation, ushort Heading, int X, int Z, short DeltaZ) : this()
+        //struct PlayerPositionUpdateClient_Struct
+        //{
+        //    /*0000*/
+        //    uint16 sequence;            // increments one each packet - Verified
+        //    /*0002*/
+        //    uint16 spawn_id;            // Player's spawn id
+        //    /*0004*/
+        //    uint16 vehicle_id;          // Player's vehicle spawn id
+        //    /*0006*/
+        //    uint8 unknown0004[4];       // ***Placeholder
+        //    /*0010*/
+        //    float delta_x;          // Change in x
+        //    /*0014*/
+        //    unsigned heading : 12;      // Directional heading
+        //    unsigned padding0040 : 20;  // ***Placeholder
+        //    /*0018*/
+        //    float x_pos;                // x coord (2nd loc value)
+        //    /*0022*/
+        //    float delta_z;          // Change in z
+        //    /*0026*/
+        //    float z_pos;                // z coord (3rd loc value)
+        //    /*0030*/
+        //    float y_pos;                // y coord (1st loc value)
+        //    /*0034*/
+        //    unsigned animation : 10;        // ***Placeholder
+        //    unsigned padding0024 : 22;  // animation
+        //    /*0038*/
+        //    float delta_y;          // Change in y
+        //    /*0042*/
+        //    signed delta_heading : 10;  // change in heading
+        //    unsigned padding0041 : 22;  // ***Placeholder
+        //    /*0046*/
+        //};
+
+        public UpdatePositionToServer(float DeltaX, short DeltaHeading, float DeltaY, float Y, short Animation, ushort Heading, float X, float Z, float DeltaZ) : this()
         {
             this.DeltaX = DeltaX;
             this.DeltaHeading = DeltaHeading;
@@ -385,25 +422,80 @@ namespace OpenEQ.Netcode {
         }
         public void Unpack(BinaryReader br)
         {
-            float deltaXFloat = br.ReadSingle();        // 0x000A: delta_x (0.0)
-            DeltaX = (short)(deltaXFloat * 64.0f);      // Convert to EQ13 format            
-            uint headingData = br.ReadUInt32();         // 0x000E: heading:12, padding:20 (1508)
-            Heading = (ushort)(headingData & 0xFFF);    // Extract 12-bit heading
-            float xFloat = br.ReadSingle();             // 0x0012: x_pos (136.25)
-            X = (int)Math.Round(xFloat * 8.0f);         // Convert to EQ19 format with proper rounding
-            float deltaZFloat = br.ReadSingle();        // 0x0016: delta_z (0.0)
-            DeltaZ = (short)(deltaZFloat * 64.0f);      // Convert to EQ13 format
-            float zFloat = br.ReadSingle();             // 0x001A: z_pos (49.375)
-            Z = (int)Math.Round(zFloat * 8.0f);         // Convert to EQ19 format with proper rounding
-            float yFloat = br.ReadSingle();             // 0x001E: y_pos (-992.5)
-            Y = (int)Math.Round(yFloat * 8.0f);         // Convert to EQ19 format with proper rounding
-            uint animData = br.ReadUInt32();            // animation + padding
-            Animation = (short)(animData & 0x3FF);      // Extract 10-bit animation
-            float deltaYFloat = br.ReadSingle();        // delta_y
-            DeltaY = (short)(deltaYFloat * 64.0f);      // Convert to EQ13 format
-            uint deltaHeadingData = br.ReadUInt32();    // delta_heading + padding
-            int rawDeltaHeading = (int)(deltaHeadingData & 0x3FF);
-            DeltaHeading = (short)(rawDeltaHeading >= 512 ? rawDeltaHeading - 1024 : rawDeltaHeading);
+            // Server-to-Client format: PlayerPositionUpdateServer_Struct
+            // This is a heavily bit-packed structure, NOT individual float values
+
+            // Structure layout:
+            // uint16 spawn_id;                    // 2 bytes (handled by parent)
+            // Followed by 20 bytes of bit-packed data:
+            // signed padding0000 : 12;            // bits 0-11
+            // signed delta_x : 13;                // bits 12-24
+            // signed padding0005 : 7;             // bits 25-31
+            // signed delta_heading : 10;          // bits 32-41
+            // signed delta_y : 13;                // bits 42-54
+            // signed padding0006 : 9;             // bits 55-63
+            // signed y_pos : 19;                  // bits 64-82
+            // signed animation : 10;              // bits 83-92
+            // signed padding0010 : 3;             // bits 93-95
+            // unsigned heading : 12;              // bits 96-107
+            // signed x_pos : 19;                  // bits 108-126
+            // signed padding0014 : 1;             // bit 127
+            // signed z_pos : 19;                  // bits 128-146
+            // signed delta_z : 13;                // bits 147-159
+
+            // Read the bit-packed data in 64-bit chunks for easier bit extraction
+            ulong firstChunk = br.ReadUInt64();   // Bits 0-63
+            ulong secondChunk = br.ReadUInt64();  // Bits 64-127
+            uint thirdChunk = br.ReadUInt32();    // Bits 128-159
+
+            // Extract delta_x (bits 12-24, 13-bit signed) and convert from EQ13 format
+            int deltaXRaw = (int)((firstChunk >> 12) & 0x1FFF);
+            int deltaXSigned = (deltaXRaw >= 0x1000) ? deltaXRaw - 0x2000 : deltaXRaw;
+            DeltaX = deltaXSigned / 64.0f; // EQ13 to float conversion
+
+            // Extract delta_heading (bits 32-41, 10-bit signed) and convert from EQ10 format
+            int deltaHeadingRaw = (int)((firstChunk >> 32) & 0x3FF);
+            int deltaHeadingSigned = (deltaHeadingRaw >= 0x200) ? deltaHeadingRaw - 0x400 : deltaHeadingRaw;
+            DeltaHeading = (short)deltaHeadingSigned; // EQ10 format, no conversion needed for heading delta
+
+            // Extract delta_y (bits 42-54, 13-bit signed) and convert from EQ13 format
+            int deltaYRaw = (int)((firstChunk >> 42) & 0x1FFF);
+            int deltaYSigned = (deltaYRaw >= 0x1000) ? deltaYRaw - 0x2000 : deltaYRaw;
+            DeltaY = deltaYSigned / 64.0f; // EQ13 to float conversion
+
+            // Extract y_pos (bits 0-18 of secondChunk, 19-bit signed) and convert from EQ19 format
+            int yRaw = (int)(secondChunk & 0x7FFFF);
+            int ySigned = (yRaw >= 0x40000) ? yRaw - 0x80000 : yRaw;
+            Y = ySigned / 8.0f; // EQ19 to float conversion
+
+            // Extract animation (bits 19-28 of secondChunk, 10-bit signed)
+            int animationRaw = (int)((secondChunk >> 19) & 0x3FF);
+            Animation = (short)((animationRaw >= 0x200) ? animationRaw - 0x400 : animationRaw);
+
+            // Extract heading (bits 32-43 of secondChunk, 12-bit unsigned) and convert from EQ12 format
+            int headingRaw = (int)((secondChunk >> 32) & 0xFFF);
+            Heading = (ushort)headingRaw; // EQ12 format, conversion handled elsewhere if needed
+
+            // Extract x_pos (bits 44-62 of secondChunk, 19-bit signed) and convert from EQ19 format
+            int xRaw = (int)((secondChunk >> 44) & 0x7FFFF);
+            int xSigned = (xRaw >= 0x40000) ? xRaw - 0x80000 : xRaw;
+            X = xSigned / 8.0f; // EQ19 to float conversion
+
+            // Extract z_pos (bits 0-18 of thirdChunk, 19-bit signed) and convert from EQ19 format
+            int zRaw = (int)(thirdChunk & 0x7FFFF);
+            int zSigned = (zRaw >= 0x40000) ? zRaw - 0x80000 : zRaw;
+            Z = zSigned / 8.0f; // EQ19 to float conversion
+
+            // Extract delta_z (bits 19-31 of thirdChunk, 13-bit signed) and convert from EQ13 format
+            int deltaZRaw = (int)((thirdChunk >> 19) & 0x1FFF);
+            int deltaZSigned = (deltaZRaw >= 0x1000) ? deltaZRaw - 0x2000 : deltaZRaw;
+            DeltaZ = deltaZSigned / 64.0f; // EQ13 to float conversion
+            //Y = Y / 8;
+            //X = X / 8;
+            //Z = Z / 8;
+            //DeltaY = DeltaY / 8;
+            //DeltaX = DeltaX / 8;
+            //DeltaZ = DeltaZ / 8;
         }
 
         public byte[] Pack()
@@ -419,6 +511,18 @@ namespace OpenEQ.Netcode {
         }
         public void Pack(BinaryWriter bw)
         {
+            bw.Write(DeltaX);
+            bw.Write((ushort)Heading);
+            bw.Write((ushort)0);
+            bw.Write(X);
+            bw.Write(DeltaZ);       
+            bw.Write(Z);        
+            bw.Write(Y);
+            bw.Write((short)Animation);
+            bw.Write((short)0);
+            bw.Write(DeltaY);
+            bw.Write(DeltaHeading);
+            bw.Write((short)0);
         }
 
         public override string ToString()
@@ -427,7 +531,7 @@ namespace OpenEQ.Netcode {
             ret += "\tDeltaX = ";
             try
             {
-                ret += $"{(DeltaX / 64.0f):F3} {DeltaX:F3},\n"; // Convert EQ13 back to float
+                ret += $"{DeltaX:F3},\n";
             }
             catch (NullReferenceException)
             {
@@ -445,7 +549,7 @@ namespace OpenEQ.Netcode {
             ret += "\tDeltaY = ";
             try
             {
-                ret += $"{(DeltaY / 64.0f):F3} {DeltaY:F3},\n"; // Convert EQ13 back to float
+                ret += $"{DeltaY:F3},\n"; 
             }
             catch (NullReferenceException)
             {
@@ -454,7 +558,7 @@ namespace OpenEQ.Netcode {
             ret += "\tY = ";
             try
             {
-                ret += $"{(Y / 8.0f):F3} {Y:F3},\n"; // Convert EQ19 back to float
+                ret += $"{Y:F3},\n"; 
             }
             catch (NullReferenceException)
             {
@@ -481,7 +585,7 @@ namespace OpenEQ.Netcode {
             ret += "\tX = ";
             try
             {
-                ret += $"{(X / 8.0f):F3} {X:F3},\n"; // Convert EQ19 back to float
+                ret += $"{X:F3},\n"; 
             }
             catch (NullReferenceException)
             {
@@ -490,7 +594,7 @@ namespace OpenEQ.Netcode {
             ret += "\tZ = ";
             try
             {
-                ret += $"{(Z / 8.0f):F3}, {Z:F3}\n"; // Convert EQ19 back to float
+                ret += $"{Z:F3}\n"; 
             }
             catch (NullReferenceException)
             {
@@ -499,7 +603,7 @@ namespace OpenEQ.Netcode {
             ret += "\tDeltaZ = ";
             try
             {
-                ret += $"{(DeltaZ / 64.0f):F3} {DeltaZ:F3}\n"; // Convert EQ13 back to float
+                ret += $"{DeltaZ:F3}\n"; 
             }
             catch (NullReferenceException)
             {

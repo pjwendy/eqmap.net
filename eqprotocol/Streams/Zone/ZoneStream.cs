@@ -132,6 +132,8 @@ namespace EQProtocol.Streams.Zone
                     var mob = packet.Get<ZoneEntry>();
                     if (mob.Name == CharName)
                         PlayerSpawnId = (ushort)mob.SpawnID;
+                    Logger.Debug($"Zone | ZoneEntry - ID: {mob.SpawnID}, Pos: ({mob.Position.X:F1}, {mob.Position.Y:F1}, {mob.Position.Z:F1})");
+                    Logger.Debug(mob.ToString());
                     ZoneEntry?.Invoke(this, mob);
                     break;
 
@@ -147,7 +149,6 @@ namespace EQProtocol.Streams.Zone
                         Send(AppPacket.Create(ZoneOp.ClientReady));
                         Entering = false;
                     }
-
                     break;
 
                 case ZoneOp.CharInventory:
@@ -160,6 +161,7 @@ namespace EQProtocol.Streams.Zone
                 case ZoneOp.ClientUpdate:
                     var pu = packet.Get<ClientUpdateFromServer>();
                     Logger.Debug($"Zone | ClientUpdate - ID: {pu.ID}, Pos: ({pu.Position.X:F1}, {pu.Position.Y:F1}, {pu.Position.Z:F1})");
+                    Logger.Debug(pu.ToString());
                     ClientUpdate?.Invoke(this, pu);
                     break;
 
@@ -375,6 +377,24 @@ namespace EQProtocol.Streams.Zone
         public void UpdatePosition(Tuple<float, float, float, float> Position)
         {
             Logger.Debug($"Zone | Sent UpdatePosition message - X:{Position.Item1} Y:{Position.Item2} Z:{ Position.Item3} Heading:{Position.Item4}");
+            var update = new ClientUpdateToServer
+            {
+                ID = PlayerSpawnId,
+                Vehicle = 0,
+                Position = new UpdatePositionToServer
+                {
+                    X = Position.Item1,
+                    Y = Position.Item2,
+                    Z = Position.Item3,
+                    Heading = (ushort)Position.Item4,
+                    DeltaX = 0,
+                    DeltaY = 0,
+                    DeltaZ = 0,
+                    DeltaHeading = 0,
+                    Animation = 0
+                },                
+            };
+            Send(AppPacket.Create(ZoneOp.ClientUpdate, update));
         }
     }
 }

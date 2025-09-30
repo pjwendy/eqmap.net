@@ -944,12 +944,22 @@ namespace OpenEQ.Netcode.GameClient
         {
             _logger.LogDebug("ClientUpdate received for SpawnID {SpawnID} - Position: ({X}, {Y}, {Z}) Heading: {Heading}",
                 update.ID, update.Position.X, update.Position.Y, update.Position.Z, update.Position.Heading);
-            // Update movement manager with current position
-            if (update.ID == Character?.SpawnID)
+
+            // Update movement manager and character position if this is our character
+            if (update.ID == Character?.SpawnID && Character != null)
             {
-                _logger.LogDebug("Updating movement manager with current position");
+                _logger.LogDebug("Updating character and movement manager with current position");
+
+                // Update character position
+                Character.X = update.Position.X;
+                Character.Y = update.Position.Y;
+                Character.Z = update.Position.Z;
+                Character.Heading = update.Position.Heading;
+
+                // Update movement manager with current position
                 _movementManager?.SetCurrentPosition(update.Position.X, update.Position.Y, update.Position.Z);
-            }                
+            }
+
             // Forward the position update event
             ClientUpdated?.Invoke(this, update);
         }
@@ -1016,6 +1026,112 @@ namespace OpenEQ.Netcode.GameClient
         /// Gets whether the character is currently moving
         /// </summary>
         public bool IsMoving => _movementManager?.IsMoving ?? false;
+
+        #region Zone and Position Information
+
+        /// <summary>
+        /// Get the current zone name using proper zone mapping
+        /// </summary>
+        public string ZoneName => CurrentZone != null ? ZoneUtils.ZoneNumberToName(CurrentZone.ZoneID) : "";
+
+        /// <summary>
+        /// Get the current zone ID
+        /// </summary>
+        public uint ZoneId => CurrentZone?.ZoneID ?? 0;
+
+        /// <summary>
+        /// Get player's current X coordinate
+        /// </summary>
+        public float X => Character?.X ?? 0;
+
+        /// <summary>
+        /// Get player's current Y coordinate
+        /// </summary>
+        public float Y => Character?.Y ?? 0;
+
+        /// <summary>
+        /// Get player's current Z coordinate
+        /// </summary>
+        public float Z => Character?.Z ?? 0;
+
+        /// <summary>
+        /// Get player's current heading
+        /// </summary>
+        public float Heading => Character?.Heading ?? 0;
+
+        /// <summary>
+        /// Get player's name
+        /// </summary>
+        public string PlayerName => Character?.Name ?? "";
+
+        /// <summary>
+        /// Get all position information as a formatted string
+        /// </summary>
+        public string Position => $"({Y:F1}, {X:F1}, {Z:F1})";
+
+        /// <summary>
+        /// Get full location information as a formatted string
+        /// </summary>
+        public string Location => $"{ZoneName} {Position}";
+
+        /// <summary>
+        /// Get distance between current position and target coordinates
+        /// </summary>
+        /// <param name="targetX">Target X coordinate</param>
+        /// <param name="targetY">Target Y coordinate</param>
+        /// <param name="targetZ">Target Z coordinate (optional, defaults to current Z)</param>
+        /// <returns>3D distance if Z provided, 2D distance otherwise</returns>
+        public double DistanceTo(double targetX, double targetY, double targetZ = double.NaN)
+        {
+            double dx = X - targetX;
+            double dy = Y - targetY;
+
+            if (double.IsNaN(targetZ))
+            {
+                // 2D distance
+                return Math.Sqrt(dx * dx + dy * dy);
+            }
+            else
+            {
+                // 3D distance
+                double dz = Z - targetZ;
+                return Math.Sqrt(dx * dx + dy * dy + dz * dz);
+            }
+        }
+
+        /// <summary>
+        /// Check if player is within a certain distance of target coordinates
+        /// </summary>
+        /// <param name="targetX">Target X coordinate</param>
+        /// <param name="targetY">Target Y coordinate</param>
+        /// <param name="maxDistance">Maximum distance</param>
+        /// <param name="targetZ">Target Z coordinate (optional)</param>
+        /// <returns>True if within distance</returns>
+        public bool IsWithinDistance(double targetX, double targetY, double maxDistance, double targetZ = double.NaN)
+        {
+            return DistanceTo(targetX, targetY, targetZ) <= maxDistance;
+        }
+
+        /// <summary>
+        /// Sleep for specified milliseconds - useful in Lua scripts for delays
+        /// </summary>
+        /// <param name="milliseconds">Number of milliseconds to sleep</param>
+        public void Sleep(double milliseconds)
+        {
+            if (milliseconds <= 0) return;
+            System.Threading.Thread.Sleep((int)Math.Round(milliseconds));
+        }
+
+        /// <summary>
+        /// Sleep for specified seconds - convenience method for Lua scripts
+        /// </summary>
+        /// <param name="seconds">Number of seconds to sleep</param>
+        public void SleepSeconds(double seconds)
+        {
+            Sleep(seconds * 1000);
+        }
+
+        #endregion
 
         private async Task LoadNavMeshForCurrentZone()
         {

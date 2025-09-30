@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:EQLogs"
+        xmlns:controls="clr-namespace:EQLogs.Controls"
         mc:Ignorable="d"
         Title="EQLogs - Packet Analyzer" Height="800" Width="1400"
         WindowStartupLocation="CenterScreen">
@@ -29,6 +30,19 @@
             <Separator/>
             <Button Command="{Binding ComparePacketsCommand}" Content="Compare Packets" Padding="10,5"/>
             <Separator/>
+            <Button Command="{Binding ShowGenericParserDiagnosticsCommand}" Content="Parser Info" Padding="10,5" ToolTip="Show generic parser diagnostic information"/>
+            <Button Command="{Binding TestSessionParsingCommand}" Content="Test Session" Padding="10,5" ToolTip="Test session parsing functionality"/>
+            <Separator/>
+
+            <!-- Session Filtering -->
+            <TextBlock Text="Session:" VerticalAlignment="Center" Margin="5,0"/>
+            <ComboBox Width="220" ItemsSource="{Binding AvailableSessions}" SelectedItem="{Binding SelectedSession}"
+                      ToolTip="Select a session to automatically filter packets by session number (resets on server restart)"/>
+            <Button Command="{Binding ClearSessionFilterCommand}" Content="Clear" Padding="10,5"
+                    ToolTip="Clear session filter and show all packets"/>
+            <Separator/>
+
+            <!-- General Text Filtering -->
             <TextBox Width="200" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
                      x:Name="FilterTextBox" VerticalContentAlignment="Center"
                      ToolTip="Filter packets or server log"/>
@@ -167,6 +181,10 @@
                                          VerticalScrollBarVisibility="Auto"
                                          HorizontalScrollBarVisibility="Auto"/>
                             </ScrollViewer>
+                        </TabItem>
+
+                        <TabItem Header="Large File Viewer">
+                            <controls:VirtualizedLogViewer DataContext="{Binding VirtualizedLogViewer}"/>
                         </TabItem>
                     </TabControl>
                     

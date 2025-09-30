@@ -1,10 +1,12 @@
 ﻿using EQProtocol.Streams.Common;
 using OpenEQ.Netcode;
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using static OpenEQ.Netcode.Utility;
 
 #region Comments about Structures and ENCODE/DECODE
@@ -316,17 +318,17 @@ namespace OpenEQ.Netcode {
     }
     public struct UpdatePositionFromServer : IEQStruct
     {
-        public short DeltaX;
+        public float DeltaX;
         public short DeltaHeading;
-        public short DeltaY;
-        public int Y;
+        public float DeltaY;
+        public float Y;
         public short Animation;
         public ushort Heading;
-        public int X;
-        public int Z;
-        public short DeltaZ;
+        public float X;
+        public float Z;
+        public float DeltaZ;
 
-        public UpdatePositionFromServer(short DeltaX, short DeltaHeading, short DeltaY, int Y, short Animation, ushort Heading, int X, int Z, short DeltaZ) : this()
+        public UpdatePositionFromServer(float DeltaX, short DeltaHeading, float DeltaY, float Y, short Animation, ushort Heading, float X, float Z, float DeltaZ) : this()
         {
             this.DeltaX = DeltaX;
             this.DeltaHeading = DeltaHeading;
@@ -359,44 +361,79 @@ namespace OpenEQ.Netcode {
         }
         public void Unpack(BinaryReader br)
         {
-        // struct PlayerPositionUpdateServer_Struct
-        // {
-        //    /*0000*/
-        //    uint16 spawn_id;
-        //    /*0002*/
-        //    signed padding0000 : 12;    // ***Placeholder
-        //    signed delta_x : 13;        // change in x
-        //    signed padding0005 : 7; // ***Placeholder
-        //    /*0006*/
-        //    signed delta_heading : 10;  // change in heading
-        //    signed delta_y : 13;        // change in y
-        //    signed padding0006 : 9; // ***Placeholder
-        //    /*0010*/
-        //    signed y_pos : 19;          // y coord
-        //    signed animation : 10;      // animation
-        //    signed padding0010 : 3; // ***Placeholder
-        //    /*0014*/
-        //    unsigned heading : 12;      // heading
-        //    signed x_pos : 19;          // x coord
-        //    signed padding0014 : 1; // ***Placeholder
-        //    /*0018*/
-        //    signed z_pos : 19;          // z coord
-        //    signed delta_z : 13;        // change in z
-        //    /*0022*/
-        // };        
-            ulong _databuf;
-            _databuf = br.ReadUInt64();
-            DeltaX = (short)(((int)(_databuf >> 12 & 0x1FFF) ^ 0x1000) - 0x1000);
-            DeltaHeading = (short)(((int)(_databuf >> 32 & 0x3FF) ^ 0x200) - 0x200);
-            DeltaY = (short)(((int)(_databuf >> 42 & 0x1FFF) ^ 0x1000) - 0x1000);
-            _databuf = br.ReadUInt64();
-            Y = ((int)(_databuf & 0x7FFFF) ^ 0x40000) - 0x40000;
-            Animation = (short)(((int)(_databuf >> 19 & 0x3FF) ^ 0x200) - 0x200);
-            Heading = (ushort)(_databuf >> 32 & 0xFFF);
-            X = ((int)(_databuf >> 44 & 0x7FFFF) ^ 0x40000) - 0x40000;
-            _databuf = br.ReadUInt32();
-            Z = ((int)(_databuf & 0x7FFFF) ^ 0x40000) - 0x40000;
-            DeltaZ = (short)(((int)(_databuf >> 19 & 0x1FFF) ^ 0x1000) - 0x1000);
+            // struct PlayerPositionUpdateServer_Struct
+            // {
+            //    /*0000*/
+            //    uint16 spawn_id;
+            //    /*0002*/
+            //    signed padding0000 : 12;    // ***Placeholder
+            //    signed delta_x : 13;        // change in x
+            //    signed padding0005 : 7; // ***Placeholder
+            //    /*0006*/
+            //    signed delta_heading : 10;  // change in heading
+            //    signed delta_y : 13;        // change in y
+            //    signed padding0006 : 9; // ***Placeholder
+            //    /*0010*/
+            //    signed y_pos : 19;          // y coord
+            //    signed animation : 10;      // animation
+            //    signed padding0010 : 3; // ***Placeholder
+            //    /*0014*/
+            //    unsigned heading : 12;      // heading
+            //    signed x_pos : 19;          // x coord
+            //    signed padding0014 : 1; // ***Placeholder
+            //    /*0018*/
+            //    signed z_pos : 19;          // z coord
+            //    signed delta_z : 13;        // change in z
+            //    /*0022*/
+            // };        
+            //ulong _databuf;
+            //_databuf = br.ReadUInt64();
+            //DeltaX = (short)(((int)(_databuf >> 12 & 0x1FFF) ^ 0x1000) - 0x1000);
+            //DeltaHeading = (short)(((int)(_databuf >> 32 & 0x3FF) ^ 0x200) - 0x200);
+            //DeltaY = (short)(((int)(_databuf >> 42 & 0x1FFF) ^ 0x1000) - 0x1000);
+            //_databuf = br.ReadUInt64();
+            //Y = ((int)(_databuf & 0x7FFFF) ^ 0x40000) - 0x40000;
+            //Animation = (short)(((int)(_databuf >> 19 & 0x3FF) ^ 0x200) - 0x200);
+            //Heading = (ushort)(_databuf >> 32 & 0xFFF);
+            //X = ((int)(_databuf >> 44 & 0x7FFFF) ^ 0x40000) - 0x40000;
+            //_databuf = br.ReadUInt32();
+            //Z = ((int)(_databuf & 0x7FFFF) ^ 0x40000) - 0x40000;
+            //DeltaZ = (short)(((int)(_databuf >> 19 & 0x1FFF) ^ 0x1000) - 0x1000);
+
+            static int SignExtend(int v, int bits) => (v << (32 - bits)) >> (32 - bits);
+
+            // 5 words = 20 bytes
+            uint w0 = br.ReadUInt32(); // [12 pad][13 delta_x][7 pad]
+            uint w1 = br.ReadUInt32(); // [10 delta_heading][13 delta_y][9 pad]
+            uint w2 = br.ReadUInt32(); // [19 y_pos][10 animation][3 pad]
+            uint w3 = br.ReadUInt32(); // [12 heading(u)][19 x_pos][1 pad]
+            uint w4 = br.ReadUInt32(); // [19 z_pos][13 delta_z]
+
+            // word 0: [12 pad][13 delta_x][7 pad]
+            DeltaX = SignExtend((int)((w0 >> 12) & 0x1FFF), 13);
+
+            // word 1: [10 delta_heading][13 delta_y][9 pad]
+            DeltaHeading = (short)SignExtend((int)((w1 >> 0) & 0x03FF), 10);
+            DeltaY = SignExtend((int)((w1 >> 10) & 0x1FFF), 13);
+
+            // word 2: [19 y_pos][10 animation][3 pad]
+            Y = SignExtend((int)((w2 >> 0) & 0x7FFFF), 19);
+            Animation = (short)SignExtend((int)((w2 >> 19) & 0x03FF), 10);
+
+            // word 3: [12 heading(u)][19 x_pos][1 pad]
+            Heading = (ushort)((w3 >> 0) & 0x0FFF);             // unsigned 12-bit
+            X = SignExtend((int)((w3 >> 12) & 0x7FFFF), 19);
+
+            // word 4: [19 z_pos][13 delta_z]
+            Z = SignExtend((int)((w4 >> 0) & 0x7FFFF), 19);
+            DeltaZ = SignExtend((int)((w4 >> 19) & 0x1FFF), 13);
+
+            //Y = Y / 8;
+            //X = X / 8;
+            //Z = Z / 8;
+            //DeltaY = DeltaY / 8;
+            //DeltaX = DeltaX / 8;
+            //DeltaZ = DeltaZ / 8;
         }
 
         public byte[] Pack()
