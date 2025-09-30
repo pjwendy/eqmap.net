@@ -883,7 +883,7 @@ public struct ExpansionInfo : IEQStruct {
     "LoginServer": "172.29.179.249",
     "LoginServerPort": 5999,
     "Username": "bifar",
-    "Password": "tea4two",
+    "Password": "",
     "WorldName": "Honeytree", 
     "CharacterName": "Bifar"
   }

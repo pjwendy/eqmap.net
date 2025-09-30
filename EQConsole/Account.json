@@ -2,7 +2,7 @@
   "Host": "172.29.179.249",
   "LoginPort": 5999,
   "Username": "bifar",
-  "Password": "tea4two",
+  "Password": "",
   "ServerName": "honeytree",
   "CharacterName": "bifar",
   "PositionUpdateIntervalMs": 100,
