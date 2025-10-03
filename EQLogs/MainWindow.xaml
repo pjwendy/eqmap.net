@@ -27,6 +27,7 @@
             <Separator/>
             <Button Command="{Binding LoadSelectedLogFileCommand}" Content="Load Selected Log" Padding="10,5" IsEnabled="{Binding SelectedLogFile, Converter={StaticResource NullToBooleanConverter}}"/>
             <Button Command="{Binding LoadBotLogFileCommand}" Content="Load Bot Log..." Padding="10,5"/>
+            <Button Command="{Binding LoadEQMapLogFileCommand}" Content="Load EQMap Log..." Padding="10,5"/>
             <Separator/>
             <Button Command="{Binding ComparePacketsCommand}" Content="Compare Packets" Padding="10,5"/>
             <Separator/>
@@ -185,6 +186,36 @@
 
                         <TabItem Header="Large File Viewer">
                             <controls:VirtualizedLogViewer DataContext="{Binding VirtualizedLogViewer}"/>
+                        </TabItem>
+
+                        <TabItem Header="EQMap Events">
+                            <ListBox ItemsSource="{Binding EQMapLogEntries}"
+                                     SelectedItem="{Binding SelectedEQMapEntry}"
+                                     DisplayMemberPath="DisplayText"
+                                     FontFamily="Consolas" FontSize="10"
+                                     MouseDoubleClick="EQMapEventList_MouseDoubleClick">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsPacketEntry}" Value="True">
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding LogLevel}" Value="ERROR">
+                                                <Setter Property="Foreground" Value="Red"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding LogLevel}" Value="WARN">
+                                                <Setter Property="Foreground" Value="Orange"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Direction}" Value="C->S">
+                                                <Setter Property="Foreground" Value="Blue"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Direction}" Value="S->C">
+                                                <Setter Property="Foreground" Value="Red"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
                         </TabItem>
                     </TabControl>
                     

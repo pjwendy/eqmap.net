@@ -28,6 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 		docs\Packet_Structures.md = docs\Packet_Structures.md
 		docs\Project_Overview.md = docs\Project_Overview.md
 		docs\Protocol_Updates_Summary.md = docs\Protocol_Updates_Summary.md
+		README.md = README.md
 		docs\Readme_Protocol.md = docs\Readme_Protocol.md
 		docs\Repository_References.md = docs\Repository_References.md
 		docs\uf_opcode_structs.md = docs\uf_opcode_structs.md

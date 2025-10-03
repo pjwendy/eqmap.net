@@ -154,4 +154,126 @@ public partial class MainWindow : Window
         }
         return lineNumber - 1; // TextBox uses 0-based line numbering
     }
+
+    private void EQMapEventList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is ListBox listBox && listBox.SelectedItem is EQMapLogEntry selectedEntry)
+        {
+            ShowEQMapEntryDetails(selectedEntry);
+        }
+    }
+
+    private void ShowEQMapEntryDetails(EQMapLogEntry entry)
+    {
+        try
+        {
+            // Create a detailed view window for the EQMap log entry
+            var detailWindow = new Window
+            {
+                Title = $"EQMap Log Entry Details - {entry.PacketName ?? "Log Entry"}",
+                Width = 800,
+                Height = 600,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this
+            };
+
+            var tabControl = new TabControl();
+
+            // Raw Log Tab
+            var rawLogTab = new TabItem { Header = "Raw Log" };
+            var rawLogTextBox = new TextBox
+            {
+                Text = entry.RawLogText,
+                IsReadOnly = true,
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+                FontSize = 10,
+                TextWrapping = TextWrapping.Wrap,
+                AcceptsReturn = true,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
+            };
+            rawLogTab.Content = new ScrollViewer { Content = rawLogTextBox };
+            tabControl.Items.Add(rawLogTab);
+
+            // Hex Dump Tab (if available)
+            if (entry.HasHexDump)
+            {
+                var hexTab = new TabItem { Header = "Hex Dump" };
+                var hexTextBox = new TextBox
+                {
+                    Text = entry.HexDump,
+                    IsReadOnly = true,
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+                    FontSize = 10,
+                    TextWrapping = TextWrapping.NoWrap,
+                    AcceptsReturn = true,
+                    Background = System.Windows.Media.Brushes.Black,
+                    Foreground = System.Windows.Media.Brushes.Lime,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
+                };
+                hexTab.Content = new ScrollViewer { Content = hexTextBox };
+                tabControl.Items.Add(hexTab);
+            }
+
+            // Structure Tab (if available)
+            if (entry.HasStructure)
+            {
+                var structTab = new TabItem { Header = "Structure" };
+                var structTextBox = new TextBox
+                {
+                    Text = entry.StructureData,
+                    IsReadOnly = true,
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+                    FontSize = 11,
+                    TextWrapping = TextWrapping.Wrap,
+                    AcceptsReturn = true,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
+                };
+                structTab.Content = new ScrollViewer { Content = structTextBox };
+                tabControl.Items.Add(structTab);
+            }
+
+            // Info Tab
+            var infoTab = new TabItem { Header = "Info" };
+            var infoContent = $"Timestamp: {entry.Timestamp:yyyy-MM-dd HH:mm:ss.ffff}\n" +
+                             $"Log Level: {entry.LogLevel}\n" +
+                             $"Source: {entry.Source}\n" +
+                             $"Message: {entry.Message}\n";
+
+            if (entry.IsPacketEntry)
+            {
+                infoContent += $"\nPacket Information:\n" +
+                              $"  Name: {entry.PacketName}\n" +
+                              $"  OpCode: {entry.OpCode}\n" +
+                              $"  Size: {entry.PacketSize} bytes\n" +
+                              $"  Direction: {entry.Direction}\n" +
+                              $"  Stream: {entry.StreamType}\n";
+            }
+
+            var infoTextBox = new TextBox
+            {
+                Text = infoContent,
+                IsReadOnly = true,
+                FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
+                FontSize = 12,
+                TextWrapping = TextWrapping.Wrap,
+                AcceptsReturn = true,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+            };
+            infoTab.Content = new ScrollViewer { Content = infoTextBox };
+            tabControl.Items.Add(infoTab);
+
+            detailWindow.Content = tabControl;
+            detailWindow.Show();
+
+            _viewModel.StatusMessage = $"Opened details for {entry.PacketName ?? "log entry"} at {entry.Timestamp:HH:mm:ss.fff}";
+        }
+        catch (Exception ex)
+        {
+            _viewModel.StatusMessage = $"Error showing entry details: {ex.Message}";
+            MessageBox.Show($"Failed to show entry details:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
 }

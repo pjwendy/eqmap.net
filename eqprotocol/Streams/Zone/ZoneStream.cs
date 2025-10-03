@@ -162,6 +162,7 @@ namespace EQProtocol.Streams.Zone
                     var pu = packet.Get<ClientUpdateFromServer>();
                     Logger.Debug($"Zone | ClientUpdate - ID: {pu.ID}, Pos: ({pu.Position.X:F1}, {pu.Position.Y:F1}, {pu.Position.Z:F1})");
                     Logger.Debug(pu.ToString());
+                    HexdumpServerStyle(packet.Data);
                     ClientUpdate?.Invoke(this, pu);
                     break;
 

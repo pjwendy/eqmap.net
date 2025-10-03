@@ -431,7 +431,7 @@ namespace EQLogs.Services
 
                 // Unpack the data
                 structInstance.Unpack(hexData);
-
+                               
                 // Use the structure's ToString method
                 sb.AppendLine($"{structureType.Name} structure (using EQProtocol reflection):");
                 sb.AppendLine();

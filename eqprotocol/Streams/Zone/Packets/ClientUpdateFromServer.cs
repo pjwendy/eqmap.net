@@ -1,10 +1,12 @@
 ﻿using EQProtocol.Streams.Common;
+using NLog;
 using OpenEQ.Netcode;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.IO;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using static OpenEQ.Netcode.Utility;
@@ -236,12 +238,14 @@ using static OpenEQ.Netcode.Utility;
 #endregion
 
 namespace OpenEQ.Netcode {
+
     /// <summary>
     /// Represents the ClientUpdate packet structure for EverQuest network communication.
     /// This packet is sent from the server to update a client about another player's/NPC's position and movement.
     /// </summary>
     public struct ClientUpdateFromServer : IEQStruct
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         /// <summary>
         /// Packet sequence number for ordering and duplicate detection
         /// </summary>
@@ -288,6 +292,8 @@ namespace OpenEQ.Netcode {
         }
         public void Unpack(byte[] data, int offset = 0)
         {
+            Logger.Debug($"ClientUpdateFromServer: Unpack, length={data.Length} offset={offset}");
+            HexdumpServerStyle(data);
             using (var ms = new MemoryStream(data, offset, data.Length - offset))
             {
                 using (var br = new BinaryReader(ms))
@@ -413,6 +419,15 @@ namespace OpenEQ.Netcode {
         }
         public UpdatePositionFromServer(BinaryReader br) : this()
         {
+            DeltaX = -1;
+            DeltaY = -1;
+            DeltaZ = -1;
+            X = -1;
+            Y = -1; 
+            Z = -1;
+            Heading = 0xFFFF;
+            Animation = -1;
+            DeltaHeading = -1;
             Unpack(br);
         }
         public void Unpack(byte[] data, int offset = 0)

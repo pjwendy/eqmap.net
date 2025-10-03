@@ -16,6 +16,7 @@ namespace EQLogs.ViewModels
         private readonly DockerLogService _dockerService;
         private readonly PacketParserService _packetParser;
         private readonly ChunkedLogReaderService _chunkedReader;
+        private readonly EQMapLogParserService _eqMapParser;
 
         // New virtualized log viewer
         public VirtualizedLogViewModel VirtualizedLogViewer { get; }
@@ -71,11 +72,18 @@ namespace EQLogs.ViewModels
         [ObservableProperty]
         private string filterText = "";
 
+        // EQMap Log support
+        public ObservableCollection<EQMapLogEntry> EQMapLogEntries { get; } = new();
+
+        [ObservableProperty]
+        private EQMapLogEntry? selectedEQMapEntry;
+
         public MainViewModel()
         {
             _dockerService = new DockerLogService();
             _packetParser = new PacketParserService();
             _chunkedReader = new ChunkedLogReaderService(_dockerService, _packetParser);
+            _eqMapParser = new EQMapLogParserService();
 
             // Initialize virtualized log viewer
             VirtualizedLogViewer = new VirtualizedLogViewModel(_chunkedReader, _dockerService);
@@ -176,22 +184,22 @@ namespace EQLogs.ViewModels
                     Filter = "Log files (*.txt;*.log)|*.txt;*.log|All files (*.*)|*.*",
                     Title = "Select Bot Log File"
                 };
-                
+
                 if (dialog.ShowDialog() == true)
                 {
                     IsLoading = true;
                     StatusMessage = "Loading bot log file...";
-                    
+
                     var logContent = await File.ReadAllTextAsync(dialog.FileName);
                     var parsedPackets = _packetParser.ParseLogContent(logContent);
-                    
+
                     BotPackets.Clear();
                     foreach (var packet in parsedPackets)
                     {
                         packet.Source = "Bot"; // Mark as bot packets
                         BotPackets.Add(packet);
                     }
-                    
+
                     StatusMessage = $"Loaded {parsedPackets.Count} bot packets";
                 }
             }
@@ -199,6 +207,50 @@ namespace EQLogs.ViewModels
             {
                 StatusMessage = $"Error loading bot log file: {ex.Message}";
                 MessageBox.Show($"Failed to load bot log file:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
+        private async Task LoadEQMapLogFile()
+        {
+            try
+            {
+                var dialog = new Microsoft.Win32.OpenFileDialog
+                {
+                    Filter = "EQMap log files (*.log)|*.log|All files (*.*)|*.*",
+                    Title = "Select EQMap Log File",
+                    InitialDirectory = Path.Combine(Environment.CurrentDirectory, "EQMap", "bin", "Debug", "logs")
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    IsLoading = true;
+                    StatusMessage = "Loading EQMap log file...";
+
+                    var logContent = await File.ReadAllTextAsync(dialog.FileName);
+                    var parsedEntries = _eqMapParser.ParseLogContent(logContent);
+
+                    EQMapLogEntries.Clear();
+                    foreach (var entry in parsedEntries)
+                    {
+                        EQMapLogEntries.Add(entry);
+                    }
+
+                    // Switch to EQMap Events tab to show the loaded entries
+                    PacketListTabIndex = 5; // EQMap Events tab
+
+                    var packetCount = parsedEntries.Count(e => e.IsPacketEntry);
+                    StatusMessage = $"Loaded {parsedEntries.Count} entries ({packetCount} packets) from EQMap log";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error loading EQMap log file: {ex.Message}";
+                MessageBox.Show($"Failed to load EQMap log file:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
